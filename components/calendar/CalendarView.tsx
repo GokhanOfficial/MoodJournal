@@ -241,7 +241,10 @@ export default function CalendarView() {
               <p className="text-sm text-muted-foreground mb-4">
                 Create a new journal entry for this date.
               </p>
-              <Link href="/journal/new" className="btn-primary">
+              <Link 
+                href={`/journal/new?date=${format(selectedDate, 'yyyy-MM-dd')}`} 
+                className="btn-primary"
+              >
                 Write Entry
               </Link>
             </div>

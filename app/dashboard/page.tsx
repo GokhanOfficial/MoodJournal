@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { getMoodLevel, getMoodColor } from '@/types/emotions'
 import { Plus, BookOpen, Calendar, TrendingUp, Heart, LogOut, User, BarChart3, Sparkles, Target } from 'lucide-react'
+import { format } from 'date-fns'
 import MoodTrendsChart from '@/components/analytics/MoodTrendsChart'
 import GoalsTracker from '@/components/goals/GoalsTracker'
 import type { JournalEntry } from '@/types/database'
@@ -252,6 +253,18 @@ export default function DashboardPage() {
                     <div>
                       <h4 className="font-medium">Write New Entry</h4>
                       <p className="text-xs text-muted-foreground">Start journaling now</p>
+                    </div>
+                  </div>
+                </Link>
+                
+                <Link href={`/journal/new?date=${format(new Date(), 'yyyy-MM-dd')}`} className="group">
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background/50 transition-all duration-200 hover:border-primary/50 hover:bg-background/80">
+                    <div className="p-2 rounded-lg bg-blue-500/10">
+                      <Calendar className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Write for Today</h4>
+                      <p className="text-xs text-muted-foreground">Create entry for {format(new Date(), 'MMM d')}</p>
                     </div>
                   </div>
                 </Link>

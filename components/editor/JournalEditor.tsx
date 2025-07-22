@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { analyzeEmotionAPI, calculateMoodScore, getEmotionalInsights } from '@/services/emotion-analysis-client'
-import { Save, Mic, MicOff, Loader2, ArrowLeft, Heart, Sparkles, Brain, TrendingUp, Eye, EyeOff, Zap } from 'lucide-react'
+import { Save, Mic, MicOff, Loader2, ArrowLeft, Heart, Sparkles, Brain, TrendingUp, Eye, EyeOff, Zap, Calendar } from 'lucide-react'
+import { format } from 'date-fns'
 import type { JournalEntry } from '@/types/database'
 import type { SentimentAnalysis } from '@/types/emotions'
 import Link from 'next/link'
@@ -17,6 +18,12 @@ interface JournalEditorProps {
 export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
   const [title, setTitle] = useState(entry?.title || '')
   const [content, setContent] = useState(entry?.content || '')
+  const [entryDate, setEntryDate] = useState(() => {
+    if (entry?.created_at) {
+      return format(new Date(entry.created_at), 'yyyy-MM-dd')
+    }
+    return format(new Date(), 'yyyy-MM-dd')
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
@@ -27,10 +34,23 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
   const [showInsights, setShowInsights] = useState(false)
   
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout>()
   const lastAutoSaveRef = useRef<Date | null>(null)
   const pendingSaveRef = useRef(false)
+
+  // Initialize date from URL parameter if provided
+  useEffect(() => {
+    const dateParam = searchParams.get('date')
+    if (dateParam && !entry?.id) {
+      // Only set date from URL for new entries
+      const paramDate = new Date(dateParam)
+      if (!isNaN(paramDate.getTime())) {
+        setEntryDate(format(paramDate, 'yyyy-MM-dd'))
+      }
+    }
+  }, [searchParams, entry?.id])
 
   // Load existing analysis from database entry
   useEffect(() => {
@@ -95,6 +115,12 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
         updated_at: new Date().toISOString()
       }
 
+      // If this is a new entry with a custom date, set created_at
+      if (!entry?.id && entryDate !== format(new Date(), 'yyyy-MM-dd')) {
+        const customDate = new Date(entryDate + 'T' + format(new Date(), 'HH:mm:ss'))
+        entryData.created_at = customDate.toISOString()
+      }
+
       // Don't analyze during auto-save, just save the content
       console.log('💾 Auto-saving without analysis...')
 
@@ -152,7 +178,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
       if (user && (entry?.id || content.trim())) {
         const moodScore = calculateMoodScore(analysis)
         
-        const entryData = {
+        const entryData: any = {
           user_id: user.id,
           title: title || null,
           content: content,
@@ -161,6 +187,12 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
           emotion_data: analysis.emotions,
           emotions: analysis.emotionalThemes,
           updated_at: new Date().toISOString()
+        }
+
+        // If this is a new entry with a custom date, set created_at
+        if (!entry?.id && entryDate !== format(new Date(), 'yyyy-MM-dd')) {
+          const customDate = new Date(entryDate + 'T' + format(new Date(), 'HH:mm:ss'))
+          entryData.created_at = customDate.toISOString()
         }
 
         let result
@@ -272,7 +304,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
         if (user && (entry?.id || content.trim())) {
           const moodScore = calculateMoodScore(analysis)
           
-          const entryData = {
+          const entryData: any = {
             user_id: user.id,
             title: title || null,
             content: content,
@@ -281,6 +313,12 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
             emotion_data: analysis.emotions,
             emotions: analysis.emotionalThemes,
             updated_at: new Date().toISOString()
+          }
+
+          // If this is a new entry with a custom date, set created_at
+          if (!entry?.id && entryDate !== format(new Date(), 'yyyy-MM-dd')) {
+            const customDate = new Date(entryDate + 'T' + format(new Date(), 'HH:mm:ss'))
+            entryData.created_at = customDate.toISOString()
           }
 
           if (entry?.id) {
@@ -440,6 +478,36 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
                   placeholder="Give your entry a meaningful title..."
                   className="w-full border-0 bg-transparent text-3xl font-bold placeholder:text-muted-foreground/50 focus:outline-none resize-none"
                 />
+              </div>
+
+              {/* Date Picker */}
+              <div className="space-y-2">
+                <label htmlFor="entryDate" className="text-sm font-medium text-muted-foreground">
+                  Entry Date
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      id="entryDate"
+                      type="date"
+                      value={entryDate}
+                      onChange={(e) => setEntryDate(e.target.value)}
+                      max={format(new Date(), 'yyyy-MM-dd')} // Prevent future dates
+                      className="pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                      disabled={!!entry?.id} // Disable for existing entries to prevent confusion
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {entryDate === format(new Date(), 'yyyy-MM-dd') ? 'Today' : format(new Date(entryDate), 'EEEE, MMM d')}
+                    {entry?.id && ' (editing existing entry)'}
+                  </span>
+                </div>
+                {entry?.id && (
+                  <p className="text-xs text-amber-600">
+                    Note: Date cannot be changed for existing entries
+                  </p>
+                )}
               </div>
 
               {/* Editor */}
