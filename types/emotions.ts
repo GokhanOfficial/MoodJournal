@@ -14,6 +14,10 @@ export interface SentimentAnalysis {
   confidence: number // 0 to 1 scale
   emotions: EmotionScore
   keywords?: string[]
+  moodScore?: number // 1-10 scale (AI-generated mood score)
+  emotionalThemes?: string[] // Key emotional themes
+  emotionalIntensity?: number // 0-1 scale (overall emotional intensity)
+  dominantEmotion?: string // Strongest detected emotion
 }
 
 export interface MoodData {

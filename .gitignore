@@ -260,4 +260,4 @@ temp/
 *.njsproj
 *.sln
 *.sw?
-forge.yaml
+*.json

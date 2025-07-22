@@ -44,6 +44,7 @@ export interface Database {
           mood_score: number | null
           sentiment: string | null
           emotion_data: Json | null
+          emotions: string[] | null
           created_at: string
           updated_at: string
         }
@@ -55,6 +56,7 @@ export interface Database {
           mood_score?: number | null
           sentiment?: string | null
           emotion_data?: Json | null
+          emotions?: string[] | null
           created_at?: string
           updated_at?: string
         }
@@ -66,6 +68,7 @@ export interface Database {
           mood_score?: number | null
           sentiment?: string | null
           emotion_data?: Json | null
+          emotions?: string[] | null
           created_at?: string
           updated_at?: string
         }

@@ -45,28 +45,38 @@ export class OpenAIClient {
 
   async chatCompletion(
     messages: OpenAIMessage[],
-    model: string = 'gpt-3.5-turbo',
+    model: string = process.env.OPENAI_MODEL || 'gpt-4o-mini',
     temperature: number = 0.7
   ): Promise<OpenAIResponse> {
+    console.log('🤖 OpenAI API call:', { model, messageCount: messages.length })
+
+    const requestBody = {
+      model,
+      messages,
+      temperature,
+      max_tokens: 1000,
+    }
+
     const response = await fetch(`${this.baseURL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.apiKey}`,
       },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature,
-        max_tokens: 1000,
-      }),
+      body: JSON.stringify(requestBody),
     })
 
+    console.log('📡 API Response status:', response.status)
+
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('❌ API Error Response:', errorText)
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`)
     }
 
-    return response.json()
+    const result = await response.json()
+    console.log('✅ API Success - Model used:', result.model, 'Tokens:', result.usage?.total_tokens)
+    return result
   }
 
   async transcribeAudio(audioFile: File): Promise<TranscriptionResponse> {

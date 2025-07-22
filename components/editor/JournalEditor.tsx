@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { analyzeSentiment, calculateMoodScore } from '@/services/emotion-analysis'
-import { Save, Mic, MicOff, Loader2, ArrowLeft, Heart, Sparkles } from 'lucide-react'
+import { analyzeEmotionAPI, calculateMoodScore, getEmotionalInsights } from '@/services/emotion-analysis-client'
+import { Save, Mic, MicOff, Loader2, ArrowLeft, Heart, Sparkles, Brain, TrendingUp, Eye, EyeOff, Zap } from 'lucide-react'
 import type { JournalEntry } from '@/types/database'
+import type { SentimentAnalysis } from '@/types/emotions'
 import Link from 'next/link'
 
 interface JournalEditorProps {
@@ -21,6 +22,9 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [currentAnalysis, setCurrentAnalysis] = useState<SentimentAnalysis | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [showInsights, setShowInsights] = useState(false)
   
   const router = useRouter()
   const supabase = createClient()
@@ -28,7 +32,38 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
   const lastAutoSaveRef = useRef<Date | null>(null)
   const pendingSaveRef = useRef(false)
 
-  // Auto-save function that uses refs to get current values
+  // Load existing analysis from database entry
+  useEffect(() => {
+    if (entry && entry.mood_score) {
+      console.log('📊 Loading existing analysis from database')
+      
+      // Reconstruct analysis object from database fields
+      const existingAnalysis: SentimentAnalysis = {
+        score: entry.sentiment === 'positive' ? 0.5 : entry.sentiment === 'negative' ? -0.5 : 0,
+        label: (entry.sentiment as 'positive' | 'negative' | 'neutral') || 'neutral',
+        confidence: 0.8, // Assume high confidence for saved analysis
+        emotions: entry.emotion_data ? entry.emotion_data as any : {
+          joy: 0.15,
+          sadness: 0.1,
+          anger: 0.1,
+          fear: 0.1,
+          surprise: 0.1,
+          disgust: 0.05,
+          neutral: 0.4
+        },
+        keywords: [],
+        moodScore: entry.mood_score,
+        emotionalThemes: entry.emotions || ['reflection'],
+        emotionalIntensity: Math.abs(entry.sentiment === 'positive' ? 0.6 : entry.sentiment === 'negative' ? 0.6 : 0.3),
+        dominantEmotion: entry.sentiment === 'positive' ? 'joy' : entry.sentiment === 'negative' ? 'sadness' : 'neutral'
+      }
+      
+      setCurrentAnalysis(existingAnalysis)
+      console.log('✅ Loaded existing analysis:', existingAnalysis)
+    }
+  }, [entry])
+
+  // Auto-save function (WITHOUT emotion analysis)
   const performAutoSave = useCallback(async () => {
     if (pendingSaveRef.current) return
     
@@ -60,15 +95,8 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
         updated_at: new Date().toISOString()
       }
 
-      if (currentContent.trim().length > 20) {
-        // Analyze sentiment for substantial content
-        const sentiment = await analyzeSentiment(currentContent)
-        const moodScore = calculateMoodScore(sentiment)
-        
-        entryData.mood_score = moodScore
-        entryData.sentiment = sentiment.label
-        entryData.emotion_data = sentiment.emotions
-      }
+      // Don't analyze during auto-save, just save the content
+      console.log('💾 Auto-saving without analysis...')
 
       let result
       if (entry?.id) {
@@ -105,7 +133,71 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     }
   }, [entry?.id, supabase, onSave, router, title, content])
 
-  // Handle content changes with debounced auto-save
+  // Manual mood analysis function
+  const performMoodAnalysis = useCallback(async () => {
+    if (!content.trim() || content.trim().length < 20) {
+      alert('Please write at least 20 characters for mood analysis.')
+      return
+    }
+
+    setIsAnalyzing(true)
+    console.log('🧠 Starting manual mood analysis...')
+    
+    try {
+      const analysis = await analyzeEmotionAPI(content)
+      setCurrentAnalysis(analysis)
+      
+      // Save the analysis to database
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && (entry?.id || content.trim())) {
+        const moodScore = calculateMoodScore(analysis)
+        
+        const entryData = {
+          user_id: user.id,
+          title: title || null,
+          content: content,
+          mood_score: moodScore,
+          sentiment: analysis.label,
+          emotion_data: analysis.emotions,
+          emotions: analysis.emotionalThemes,
+          updated_at: new Date().toISOString()
+        }
+
+        let result
+        if (entry?.id) {
+          result = await supabase
+            .from('journal_entries')
+            .update(entryData)
+            .eq('id', entry.id)
+            .select()
+            .single()
+        } else {
+          result = await supabase
+            .from('journal_entries')
+            .insert(entryData)
+            .select()
+            .single()
+        }
+
+        if (result.error) throw result.error
+        
+        console.log('✅ Mood analysis saved to database')
+        onSave?.(result.data)
+        
+        if (!entry?.id && result.data) {
+          router.replace(`/journal/${result.data.id}`)
+        }
+      }
+      
+    } catch (error) {
+      console.error('Manual mood analysis failed:', error)
+      alert('Mood analysis failed. Please try again.')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }, [content, title, entry?.id, supabase, onSave, router])
+
+  // Handle content changes (NO auto-analysis)
   const handleContentChange = (newContent: string) => {
     setContent(newContent)
     setHasUnsavedChanges(true)
@@ -159,6 +251,59 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     await performAutoSave()
   }
 
+  // Handle navigation back to dashboard with analysis
+  const handleBackToDashboard = useCallback(async () => {
+    console.log('🏠 Navigating back to dashboard...')
+    
+    // Save current content first
+    if (hasUnsavedChanges) {
+      await performAutoSave()
+    }
+    
+    // Perform analysis if content exists and no analysis yet
+    if (content.trim().length >= 20 && !currentAnalysis) {
+      console.log('🧠 Performing analysis before leaving...')
+      try {
+        setIsAnalyzing(true)
+        const analysis = await analyzeEmotionAPI(content)
+        
+        // Save analysis to database
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user && (entry?.id || content.trim())) {
+          const moodScore = calculateMoodScore(analysis)
+          
+          const entryData = {
+            user_id: user.id,
+            title: title || null,
+            content: content,
+            mood_score: moodScore,
+            sentiment: analysis.label,
+            emotion_data: analysis.emotions,
+            emotions: analysis.emotionalThemes,
+            updated_at: new Date().toISOString()
+          }
+
+          if (entry?.id) {
+            await supabase
+              .from('journal_entries')
+              .update(entryData)
+              .eq('id', entry.id)
+          } else {
+            await supabase
+              .from('journal_entries')
+              .insert(entryData)
+          }
+        }
+      } catch (error) {
+        console.error('Analysis on navigation failed:', error)
+      } finally {
+        setIsAnalyzing(false)
+      }
+    }
+    
+    router.push('/dashboard')
+  }, [hasUnsavedChanges, content, currentAnalysis, title, entry?.id, supabase, router, performAutoSave])
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -189,6 +334,26 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     return `Saved ${minutes} minutes ago`
   }
 
+  const getMoodEmoji = (score?: number) => {
+    if (!score) return '😐'
+    if (score <= 2) return '😞'
+    if (score <= 4) return '😔'
+    if (score <= 6) return '😐'
+    if (score <= 8) return '😊'
+    return '😄'
+  }
+
+  const getMoodColorClass = (score?: number) => {
+    if (!score) return 'text-gray-500'
+    if (score <= 2) return 'text-red-500'
+    if (score <= 4) return 'text-orange-500'
+    if (score <= 6) return 'text-yellow-500'
+    if (score <= 8) return 'text-green-500'
+    return 'text-emerald-500'
+  }
+
+  const emotionalInsights = currentAnalysis ? getEmotionalInsights(currentAnalysis) : []
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
@@ -196,13 +361,18 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
         <div className="mx-auto max-w-4xl px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link
-                href="/dashboard"
+              <button
+                onClick={handleBackToDashboard}
                 className="btn-ghost p-3"
                 title="Back to Dashboard"
+                disabled={isAnalyzing}
               >
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
+                {isAnalyzing ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <ArrowLeft className="h-5 w-5" />
+                )}
+              </button>
               <div className="flex items-center space-x-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                   <Heart className="h-5 w-5 text-primary-foreground" />
@@ -253,79 +423,244 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <div className="card !p-8 space-y-8">
-          {/* Title Input */}
-          <div className="space-y-2">
-            <label htmlFor="title" className="text-sm font-medium text-muted-foreground">
-              Entry Title (Optional)
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="Give your entry a meaningful title..."
-              className="w-full border-0 bg-transparent text-3xl font-bold placeholder:text-muted-foreground/50 focus:outline-none resize-none"
-            />
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Main Editor */}
+          <div className="lg:col-span-2">
+            <div className="card !p-8 space-y-8">
+              {/* Title Input */}
+              <div className="space-y-2">
+                <label htmlFor="title" className="text-sm font-medium text-muted-foreground">
+                  Entry Title (Optional)
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  placeholder="Give your entry a meaningful title..."
+                  className="w-full border-0 bg-transparent text-3xl font-bold placeholder:text-muted-foreground/50 focus:outline-none resize-none"
+                />
+              </div>
+
+              {/* Editor */}
+              <div className="relative space-y-2">
+                <label htmlFor="content" className="text-sm font-medium text-muted-foreground">
+                  Your thoughts and feelings
+                </label>
+                <div className="relative">
+                  <textarea
+                    id="content"
+                    value={content}
+                    onChange={(e) => handleContentChange(e.target.value)}
+                    placeholder="How are you feeling today? Share your thoughts, experiences, emotions, or anything on your mind. Write at least 20 characters to enable mood analysis..."
+                    className="min-h-[500px] w-full resize-none border-0 bg-transparent text-base leading-relaxed placeholder:text-muted-foreground/70 focus:outline-none"
+                    autoFocus
+                  />
+                  
+                  {/* Voice input button */}
+                  <button
+                    onClick={startRecording}
+                    disabled={isRecording}
+                    className={`absolute bottom-4 right-4 rounded-full p-4 transition-all duration-200 shadow-lg ${
+                      isRecording 
+                        ? 'bg-red-500 text-white scale-110' 
+                        : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105'
+                    }`}
+                    title={isRecording ? 'Recording...' : 'Record voice note'}
+                  >
+                    {isRecording ? (
+                      <MicOff className="h-5 w-5" />
+                    ) : (
+                      <Mic className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Statistics */}
+              <div className="flex items-center justify-between pt-6 border-t border-border">
+                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-2">
+                    <div className="h-1 w-1 rounded-full bg-blue-500" />
+                    {content.length} characters
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <div className="h-1 w-1 rounded-full bg-emerald-500" />
+                    {content.trim().split(/\s+/).filter(word => word).length} words
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <div className="h-1 w-1 rounded-full bg-amber-500" />
+                    ~{Math.ceil(content.trim().split(/\s+/).filter(word => word).length / 200)} min read
+                  </span>
+                </div>
+                
+                {/* Mobile save status */}
+                <div className="sm:hidden text-xs">
+                  {isSaving && <span className="text-blue-600">Saving...</span>}
+                  {hasUnsavedChanges && !isSaving && <span className="text-amber-600">Unsaved</span>}
+                  {lastSaved && !hasUnsavedChanges && !isSaving && <span className="text-emerald-600">Saved</span>}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Editor */}
-          <div className="relative space-y-2">
-            <label htmlFor="content" className="text-sm font-medium text-muted-foreground">
-              Your thoughts and feelings
-            </label>
-            <div className="relative">
-              <textarea
-                id="content"
-                value={content}
-                onChange={(e) => handleContentChange(e.target.value)}
-                placeholder="How are you feeling today? Share your thoughts, experiences, emotions, or anything on your mind. The more you write, the better insights you'll receive..."
-                className="min-h-[500px] w-full resize-none border-0 bg-transparent text-base leading-relaxed placeholder:text-muted-foreground/70 focus:outline-none"
-                autoFocus
-              />
-              
-              {/* Voice input button */}
-              <button
-                onClick={startRecording}
-                disabled={isRecording}
-                className={`absolute bottom-4 right-4 rounded-full p-4 transition-all duration-200 shadow-lg ${
-                  isRecording 
-                    ? 'bg-red-500 text-white scale-110' 
-                    : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105'
-                }`}
-                title={isRecording ? 'Recording...' : 'Record voice note'}
-              >
-                {isRecording ? (
-                  <MicOff className="h-5 w-5" />
+          {/* Mood Analysis Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 space-y-4">
+              {/* Mood Analysis Card */}
+              <div className="card">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold">Mood Analysis</h3>
+                  </div>
+                  {isAnalyzing && (
+                    <div className="h-4 w-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  )}
+                </div>
+
+                {/* Manual Analysis Button */}
+                <div className="mb-6">
+                  <button
+                    onClick={performMoodAnalysis}
+                    disabled={isAnalyzing || content.trim().length < 20}
+                    className="btn-primary w-full"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="mr-2 h-4 w-4" />
+                        Analyse My Mood
+                      </>
+                    )}
+                  </button>
+                  {content.trim().length < 20 && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Write at least 20 characters to enable analysis
+                    </p>
+                  )}
+                </div>
+
+                {currentAnalysis ? (
+                  <div className="space-y-4">
+                    {/* Mood Score */}
+                    <div className="text-center">
+                      <div className={`text-4xl ${getMoodColorClass(currentAnalysis.moodScore)}`}>
+                        {getMoodEmoji(currentAnalysis.moodScore)}
+                      </div>
+                      <div className="mt-2">
+                        <span className={`text-2xl font-bold ${getMoodColorClass(currentAnalysis.moodScore)}`}>
+                          {currentAnalysis.moodScore || calculateMoodScore(currentAnalysis)}
+                        </span>
+                        <span className="text-muted-foreground">/10</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground capitalize">
+                        {currentAnalysis.label} • {Math.round(currentAnalysis.confidence * 100)}% confident
+                      </p>
+                    </div>
+
+                    {/* Dominant Emotion */}
+                    {currentAnalysis.dominantEmotion && (
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">Dominant Emotion</p>
+                        <p className="font-medium capitalize">{currentAnalysis.dominantEmotion}</p>
+                      </div>
+                    )}
+
+                    {/* Emotional Themes */}
+                    {currentAnalysis.emotionalThemes && currentAnalysis.emotionalThemes.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium mb-2">Emotional Themes</p>
+                        <div className="flex flex-wrap gap-2">
+                          {currentAnalysis.emotionalThemes.slice(0, 3).map((theme, index) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs capitalize"
+                            >
+                              {theme}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Emotional Intensity */}
+                    {currentAnalysis.emotionalIntensity && (
+                      <div>
+                        <p className="text-sm font-medium mb-2">Emotional Intensity</p>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${currentAnalysis.emotionalIntensity * 100}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {Math.round(currentAnalysis.emotionalIntensity * 100)}% intensity
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Keywords */}
+                    {currentAnalysis.keywords && currentAnalysis.keywords.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium mb-2">Key Words</p>
+                        <div className="flex flex-wrap gap-1">
+                          {currentAnalysis.keywords.slice(0, 5).map((keyword, index) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 bg-muted text-muted-foreground rounded text-xs"
+                            >
+                              {keyword}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <Mic className="h-5 w-5" />
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Brain className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">
+                      {content.trim().length < 20 
+                        ? 'Write at least 20 characters to enable mood analysis'
+                        : 'Click "Analyse My Mood" to see your emotional insights'
+                      }
+                    </p>
+                  </div>
                 )}
-              </button>
-            </div>
-          </div>
+              </div>
 
-          {/* Statistics */}
-          <div className="flex items-center justify-between pt-6 border-t border-border">
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2">
-                <div className="h-1 w-1 rounded-full bg-blue-500" />
-                {content.length} characters
-              </span>
-              <span className="flex items-center gap-2">
-                <div className="h-1 w-1 rounded-full bg-emerald-500" />
-                {content.trim().split(/\s+/).filter(word => word).length} words
-              </span>
-              <span className="flex items-center gap-2">
-                <div className="h-1 w-1 rounded-full bg-amber-500" />
-                ~{Math.ceil(content.trim().split(/\s+/).filter(word => word).length / 200)} min read
-              </span>
-            </div>
-            
-            {/* Mobile save status */}
-            <div className="sm:hidden text-xs">
-              {isSaving && <span className="text-blue-600">Saving...</span>}
-              {hasUnsavedChanges && !isSaving && <span className="text-amber-600">Unsaved</span>}
-              {lastSaved && !hasUnsavedChanges && !isSaving && <span className="text-emerald-600">Saved</span>}
+              {/* Emotional Insights */}
+              {emotionalInsights.length > 0 && (
+                <div className="card">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-emerald-500" />
+                      <h3 className="font-semibold">Insights</h3>
+                    </div>
+                    <button
+                      onClick={() => setShowInsights(!showInsights)}
+                      className="btn-ghost p-1"
+                    >
+                      {showInsights ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  
+                  {showInsights && (
+                    <div className="space-y-3">
+                      {emotionalInsights.map((insight, index) => (
+                        <div key={index} className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                          <p className="text-sm text-emerald-800">{insight}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

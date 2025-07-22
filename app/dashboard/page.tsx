@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { getMoodLevel, getMoodColor } from '@/types/emotions'
 import { Plus, BookOpen, Calendar, TrendingUp, Heart, LogOut, User, BarChart3, Sparkles } from 'lucide-react'
+import MoodTrendsChart from '@/components/analytics/MoodTrendsChart'
 import type { JournalEntry } from '@/types/database'
 
 export default function DashboardPage() {
@@ -107,6 +108,11 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex items-center space-x-3">
+              <Link href="/analytics" className="btn-ghost">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Analytics
+              </Link>
+              
               <Link href="/journal/new" className="btn-primary">
                 <Plus className="mr-2 h-4 w-4" />
                 New Entry
@@ -198,6 +204,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Mood Trends Chart */}
+        <MoodTrendsChart timeRange="30d" />
 
         {/* Recent Entries */}
         <div className="card">

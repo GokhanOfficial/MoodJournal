@@ -40,28 +40,32 @@ const USER_ANALYSIS_PROMPT = `Please analyze the emotional content of this journ
 
 Provide your analysis as JSON only.`
 
+// Enable debug mode via environment variable
+const DEBUG_MODE = process.env.NODE_ENV === 'development' || process.env.MOOD_ANALYSIS_DEBUG === 'true'
+
+function debugLog(...args: any[]) {
+  if (DEBUG_MODE) {
+    console.log('[MoodAnalysis]', ...args)
+  }
+}
+
 export async function analyzeSentiment(text: string): Promise<SentimentAnalysis> {
-  console.log('🧠 analyzeSentiment called with text length:', text.length)
-  
   try {
     if (!text || text.trim().length < 10) {
-      console.log('📝 Text too short, returning default analysis')
       return getDefaultAnalysis()
     }
 
-    console.log('🔧 Creating OpenAI client...')
     const openaiClient = createOpenAIClient()
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
     
-    console.log('Environment check:')
-    console.log('- OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY)
-    console.log('- OPENAI_BASE_URL:', process.env.OPENAI_BASE_URL)
-    console.log('- OPENAI_MODEL:', process.env.OPENAI_MODEL)
-    console.log('- Using model:', model)
-    console.log('Starting sentiment analysis with model:', model)
-    console.log('Text length:', text.length)
+    debugLog('Environment check:')
+    debugLog('- OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY)
+    debugLog('- OPENAI_BASE_URL:', process.env.OPENAI_BASE_URL)
+    debugLog('- OPENAI_MODEL:', process.env.OPENAI_MODEL)
+    debugLog('- Using model:', model)
+    debugLog('Starting sentiment analysis with model:', model)
+    debugLog('Text length:', text.length)
     
-    console.log('🚀 About to call OpenAI API...')
     const response = await openaiClient.chatCompletion([
       {
         role: 'system',
@@ -73,8 +77,7 @@ export async function analyzeSentiment(text: string): Promise<SentimentAnalysis>
       }
     ], model, 0.3) // Lower temperature for more consistent analysis
 
-    console.log('✅ OpenAI API response received successfully!')
-    console.log('OpenAI API response received:', {
+    debugLog('OpenAI API response received:', {
       model: response.model,
       usage: response.usage,
       finishReason: response.choices[0]?.finish_reason
@@ -82,17 +85,16 @@ export async function analyzeSentiment(text: string): Promise<SentimentAnalysis>
 
     const content = response.choices[0]?.message?.content
     if (!content) {
-      console.error('❌ Empty response from OpenAI')
       throw new Error('Empty response from OpenAI')
     }
 
-    console.log('Raw API response content:', content)
+    debugLog('Raw API response content:', content)
 
     // Parse and validate the JSON response
     const analysis = JSON.parse(content.trim())
-    console.log('Parsed analysis:', analysis)
+    debugLog('Parsed analysis:', analysis)
     
-    const result = {
+    return {
       score: validateNumber(analysis.sentiment_score, -1, 1, 0),
       label: validateSentimentLabel(analysis.sentiment_label),
       confidence: validateNumber(analysis.confidence, 0, 1, 0.5),
@@ -103,24 +105,19 @@ export async function analyzeSentiment(text: string): Promise<SentimentAnalysis>
       emotionalIntensity: validateNumber(analysis.emotional_intensity, 0, 1, 0.5),
       dominantEmotion: typeof analysis.dominant_emotion === 'string' ? analysis.dominant_emotion : 'neutral'
     }
-    
-    console.log('🎉 Returning successful analysis:', result)
-    return result
-    
   } catch (error) {
-    console.error('❌ Error analyzing sentiment:', error)
+    console.error('Error analyzing sentiment:', error)
     
     // Log more details for debugging
     if (error instanceof Error) {
       console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
+      if (DEBUG_MODE) {
+        console.error('Error stack:', error.stack)
+      }
     }
     
-    console.log('🔄 Falling back to keyword-based analysis...')
     // Enhanced fallback analysis based on basic keyword detection
-    const fallbackResult = getFallbackAnalysis(text)
-    console.log('📊 Fallback analysis result:', fallbackResult)
-    return fallbackResult
+    return getFallbackAnalysis(text)
   }
 }
 
@@ -218,7 +215,7 @@ function getFallbackAnalysis(text: string): SentimentAnalysis {
   score = Math.max(-1, Math.min(1, score))
   moodScore = Math.max(1, Math.min(10, moodScore))
   
-  console.log('📊 Fallback analysis details:', { positiveCount, negativeCount, score, label, moodScore })
+  debugLog('Using fallback analysis:', { positiveCount, negativeCount, score, label, moodScore })
   
   return {
     score,

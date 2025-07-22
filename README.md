@@ -1,37 +1,56 @@
-# MoodJournal
+# MoodJournal - AI-Powered Personal Journal
 
-An AI-powered personal journaling application that analyzes emotions and tracks mood patterns.
+An intelligent personal journaling application that uses advanced AI to analyze emotions from daily entries and track mood patterns over time.
 
-## Features
+## ✨ Features
 
-- 📝 Clean, responsive journal editor with auto-save
-- 🤖 AI-powered emotion analysis using OpenAI Compatible API
-- 📊 Mood tracking and visualization
-- 🎤 Voice-to-text input (planned)
-- 🔒 Secure authentication with Supabase
-- 📱 Mobile-responsive design
+### Core Functionality
+- 📝 **Smart Journal Editor** - Clean, responsive editor with auto-save (15-second cooldown)
+- 🧠 **Live Mood Analysis** - Real-time AI-powered emotion analysis as you write
+- 📊 **Mood Tracking & Visualization** - Comprehensive mood scoring (1-10 scale) and emotional insights
+- 🔍 **Advanced Journal Management** - Search, filter, and organize entries by mood, date, or content
+- 🔒 **Secure Authentication** - Protected with Supabase authentication
+- 📱 **Mobile-Responsive Design** - Optimized for all devices
 
-## Tech Stack
+### AI-Powered Insights
+- **Sentiment Analysis** - Advanced emotion detection using OpenAI chat completions
+- **Mood Scoring** - AI-generated mood scores with confidence ratings
+- **Emotional Themes** - Automatic identification of key emotional topics
+- **Emotional Intensity** - Measurement of emotional strength and depth
+- **Personalized Insights** - Contextual recommendations and emotional guidance
+- **Dominant Emotion Detection** - Identification of primary emotional states
 
-- **Frontend**: Next.js 14, TypeScript, TailwindCSS
-- **Backend**: Supabase (PostgreSQL + Auth)
-- **AI**: OpenAI Compatible API
-- **Charts**: Recharts
+### Advanced Features
+- 🎤 **Voice-to-Text Input** (Voice recording infrastructure ready)
+- 📈 **Mood Trend Analysis** - Track emotional patterns over time
+- 🎯 **Emotional Intelligence** - Learn about your emotional patterns
+- ⚡ **Auto-Save with Cooldown** - Never lose your thoughts
+- 🔍 **Smart Search & Filtering** - Find entries by mood, themes, or content
+
+## 🛠 Tech Stack
+
+- **Frontend**: Next.js 14 (App Router), TypeScript, TailwindCSS
+- **Backend**: Supabase (PostgreSQL + Row Level Security)
+- **AI**: OpenAI Compatible API (GPT-4o-mini, GPT-4o, GPT-4-turbo)
+- **Charts**: Recharts for mood visualizations
+- **Icons**: Lucide React
 - **Animations**: Framer Motion
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
 - Node.js 18+ 
 - npm/yarn/pnpm
 - Supabase account
-- OpenAI Compatible API access
+- OpenAI API access (or compatible API)
 
 ### Installation
 
 1. **Clone and install dependencies**
    ```bash
+   git clone [repository-url]
+   cd MoodJournal
    npm install
    ```
 
@@ -40,13 +59,21 @@ An AI-powered personal journaling application that analyzes emotions and tracks 
    cp .env.example .env.local
    ```
    
-   Fill in your API keys:
+   Fill in your configuration:
    ```env
+   # Supabase Configuration
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+   # OpenAI Configuration
    OPENAI_API_KEY=your_openai_api_key
    OPENAI_BASE_URL=https://api.openai.com/v1
+   OPENAI_MODEL=gpt-4o-mini
+
+   # Application
+   NEXTAUTH_SECRET=your_nextauth_secret_here
+   NEXTAUTH_URL=http://localhost:3000
    ```
 
 3. **Set up Supabase database**
