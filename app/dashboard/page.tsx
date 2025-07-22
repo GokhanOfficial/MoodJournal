@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { getMoodLevel, getMoodColor } from '@/types/emotions'
-import { Plus, BookOpen, Calendar, TrendingUp, Heart, LogOut, User, BarChart3, Sparkles } from 'lucide-react'
+import { Plus, BookOpen, Calendar, TrendingUp, Heart, LogOut, User, BarChart3, Sparkles, Target } from 'lucide-react'
 import MoodTrendsChart from '@/components/analytics/MoodTrendsChart'
+import GoalsTracker from '@/components/goals/GoalsTracker'
 import type { JournalEntry } from '@/types/database'
 
 export default function DashboardPage() {
@@ -16,7 +17,8 @@ export default function DashboardPage() {
     totalEntries: 0,
     averageMood: 0,
     streak: 0,
-    thisWeekMood: 0
+    thisWeekMood: 0,
+    longestStreak: 0
   })
 
   const supabase = createClient()
@@ -59,10 +61,18 @@ export default function DashboardPage() {
           ? thisWeekEntries.reduce((sum, e) => sum + e.mood_score!, 0) / thisWeekEntries.length
           : 0
 
+        // Get streak data from database
+        const { data: streakData } = await supabase
+          .from('user_streaks')
+          .select('current_streak, longest_streak')
+          .eq('user_id', user.id)
+          .single()
+
         setStats({
           totalEntries: entriesData.length,
           averageMood: Math.round(averageMood * 10) / 10,
-          streak: Math.floor(Math.random() * 7) + 1, // TODO: Calculate actual streak
+          streak: streakData?.current_streak || 0,
+          longestStreak: streakData?.longest_streak || 0,
           thisWeekMood: Math.round(thisWeekMood * 10) / 10
         })
       }
@@ -108,6 +118,16 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex items-center space-x-3">
+              <Link href="/calendar" className="btn-ghost">
+                <Calendar className="mr-2 h-4 w-4" />
+                Calendar
+              </Link>
+              
+              <Link href="/goals" className="btn-ghost">
+                <Target className="mr-2 h-4 w-4" />
+                Goals
+              </Link>
+              
               <Link href="/analytics" className="btn-ghost">
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Analytics
@@ -207,6 +227,74 @@ export default function DashboardPage() {
 
         {/* Mood Trends Chart */}
         <MoodTrendsChart timeRange="30d" />
+
+        {/* Goals Preview */}
+        <div className="grid gap-8 lg:grid-cols-2">
+          <GoalsTracker className="lg:col-span-1" />
+          
+          <div className="lg:col-span-1">
+            {/* Quick Actions */}
+            <div className="card">
+              <div className="border-b border-border pb-4 mb-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Quick Actions
+                </h3>
+                <p className="text-sm text-muted-foreground">Common tasks and shortcuts</p>
+              </div>
+              
+              <div className="grid gap-3">
+                <Link href="/journal/new" className="group">
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background/50 transition-all duration-200 hover:border-primary/50 hover:bg-background/80">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <BookOpen className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Write New Entry</h4>
+                      <p className="text-xs text-muted-foreground">Start journaling now</p>
+                    </div>
+                  </div>
+                </Link>
+                
+                <Link href="/analytics" className="group">
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background/50 transition-all duration-200 hover:border-primary/50 hover:bg-background/80">
+                    <div className="p-2 rounded-lg bg-emerald-500/10">
+                      <BarChart3 className="h-4 w-4 text-emerald-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium">View Analytics</h4>
+                      <p className="text-xs text-muted-foreground">Detailed insights and trends</p>
+                    </div>
+                  </div>
+                </Link>
+                
+                <Link href="/calendar" className="group">
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background/50 transition-all duration-200 hover:border-primary/50 hover:bg-background/80">
+                    <div className="p-2 rounded-lg bg-purple-500/10">
+                      <Calendar className="h-4 w-4 text-purple-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Calendar View</h4>
+                      <p className="text-xs text-muted-foreground">Browse entries by date</p>
+                    </div>
+                  </div>
+                </Link>
+                
+                <Link href="/goals" className="group">
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background/50 transition-all duration-200 hover:border-primary/50 hover:bg-background/80">
+                    <div className="p-2 rounded-lg bg-orange-500/10">
+                      <Target className="h-4 w-4 text-orange-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Manage Goals</h4>
+                      <p className="text-xs text-muted-foreground">Set and track progress</p>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Recent Entries */}
         <div className="card">

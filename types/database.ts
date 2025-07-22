@@ -108,9 +108,131 @@ export interface Database {
           created_at?: string
         }
       }
+      goals: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          description: string | null
+          goal_type: 'mood_average' | 'entry_count' | 'streak' | 'custom'
+          target_value: number
+          current_value: number
+          target_date: string
+          completed: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          description?: string | null
+          goal_type: 'mood_average' | 'entry_count' | 'streak' | 'custom'
+          target_value: number
+          current_value?: number
+          target_date: string
+          completed?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          description?: string | null
+          goal_type?: 'mood_average' | 'entry_count' | 'streak' | 'custom'
+          target_value?: number
+          current_value?: number
+          target_date?: string
+          completed?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_streaks: {
+        Row: {
+          id: string
+          user_id: string
+          current_streak: number
+          longest_streak: number
+          last_entry_date: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          current_streak?: number
+          longest_streak?: number
+          last_entry_date?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          current_streak?: number
+          longest_streak?: number
+          last_entry_date?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      mood_summaries: {
+        Row: {
+          id: string
+          user_id: string
+          summary_date: string
+          summary_type: 'daily' | 'weekly' | 'monthly'
+          entry_count: number
+          average_mood: number | null
+          dominant_emotions: string[] | null
+          total_words: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          summary_date: string
+          summary_type: 'daily' | 'weekly' | 'monthly'
+          entry_count?: number
+          average_mood?: number | null
+          dominant_emotions?: string[] | null
+          total_words?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          summary_date?: string
+          summary_type?: 'daily' | 'weekly' | 'monthly'
+          entry_count?: number
+          average_mood?: number | null
+          dominant_emotions?: string[] | null
+          total_words?: number
+          created_at?: string
+        }
+      }
     }
     Views: {
-      [_ in never]: never
+      goal_progress_view: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          description: string | null
+          goal_type: 'mood_average' | 'entry_count' | 'streak' | 'custom'
+          target_value: number
+          current_value: number
+          target_date: string
+          completed: boolean
+          created_at: string
+          updated_at: string
+          status: 'overdue' | 'completed' | 'due_soon' | 'on_track'
+          progress_percentage: number
+          days_remaining: number
+        }
+      }
     }
     Functions: {
       [_ in never]: never
@@ -128,3 +250,7 @@ export type UpdateTables<T extends keyof Database['public']['Tables']> = Databas
 export type Profile = Tables<'profiles'>
 export type JournalEntry = Tables<'journal_entries'>
 export type EmotionAnalysis = Tables<'emotion_analysis'>
+export type Goal = Tables<'goals'>
+export type UserStreak = Tables<'user_streaks'>
+export type MoodSummary = Tables<'mood_summaries'>
+export type GoalProgressView = Database['public']['Views']['goal_progress_view']['Row']
