@@ -9,6 +9,8 @@ import { format } from 'date-fns'
 import RichTextEditor from '@/components/editor/RichTextEditor'
 import VoiceRecorder from '@/components/voice/VoiceRecorder'
 import LocationSelector, { type LocationData } from '@/components/location/LocationSelector'
+import { WeatherCard } from '@/components/weather/WeatherDisplay'
+import { useWeather } from '@/hooks/useWeather'
 import type { JournalEntry } from '@/types/database'
 import type { SentimentAnalysis } from '@/types/emotions'
 import Link from 'next/link'
@@ -58,6 +60,22 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout>()
   const lastAutoSaveRef = useRef<Date | null>(null)
   const pendingSaveRef = useRef(false)
+
+  // Weather data hook
+  const {
+    weatherData,
+    loading: weatherLoading,
+    error: weatherError
+  } = useWeather(location, new Date(entryDate), {
+    enabled: !!location,
+    debounceMs: 2000, // Increase debounce to 2 seconds
+    onError: (error) => {
+      // Only log non-API key errors to avoid spam
+      if (!error.includes('Invalid API key') && !error.includes('401')) {
+        console.warn('Weather fetch error:', error)
+      }
+    }
+  })
 
   // Initialize date from URL parameter if provided
   useEffect(() => {
@@ -899,6 +917,14 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* Weather Card */}
+              {location && (
+                <WeatherCard 
+                  weatherData={weatherData} 
+                  loading={weatherLoading}
+                />
               )}
             </div>
           </div>

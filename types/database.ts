@@ -264,6 +264,74 @@ export interface Database {
           updated_at?: string
         }
       }
+      weather_data: {
+        Row: {
+          id: string
+          location_latitude: number
+          location_longitude: number
+          weather_date: string
+          temperature: number | null
+          temperature_feels_like: number | null
+          humidity: number | null
+          pressure: number | null
+          weather_main: string | null
+          weather_description: string | null
+          weather_icon: string | null
+          wind_speed: number | null
+          wind_direction: number | null
+          visibility: number | null
+          uv_index: number | null
+          clouds: number | null
+          api_source: string | null
+          api_response: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          location_latitude: number
+          location_longitude: number
+          weather_date: string
+          temperature?: number | null
+          temperature_feels_like?: number | null
+          humidity?: number | null
+          pressure?: number | null
+          weather_main?: string | null
+          weather_description?: string | null
+          weather_icon?: string | null
+          wind_speed?: number | null
+          wind_direction?: number | null
+          visibility?: number | null
+          uv_index?: number | null
+          clouds?: number | null
+          api_source?: string | null
+          api_response?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          location_latitude?: number
+          location_longitude?: number
+          weather_date?: string
+          temperature?: number | null
+          temperature_feels_like?: number | null
+          humidity?: number | null
+          pressure?: number | null
+          weather_main?: string | null
+          weather_description?: string | null
+          weather_icon?: string | null
+          wind_speed?: number | null
+          wind_direction?: number | null
+          visibility?: number | null
+          uv_index?: number | null
+          clouds?: number | null
+          api_source?: string | null
+          api_response?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       mood_summaries: {
         Row: {
           id: string
@@ -339,5 +407,6 @@ export type EmotionAnalysis = Tables<'emotion_analysis'>
 export type AudioRecording = Tables<'audio_recordings'>
 export type Goal = Tables<'goals'>
 export type UserStreak = Tables<'user_streaks'>
+export type WeatherData = Tables<'weather_data'>
 export type MoodSummary = Tables<'mood_summaries'>
 export type GoalProgressView = Database['public']['Views']['goal_progress_view']['Row']
