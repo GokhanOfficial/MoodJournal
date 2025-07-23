@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { analyzeEmotionAPI, calculateMoodScore, getEmotionalInsights } from '@/services/emotion-analysis-client'
-import { Save, Mic, MicOff, Loader2, ArrowLeft, Heart, Sparkles, Brain, TrendingUp, Eye, EyeOff, Zap, Calendar, Volume2 } from 'lucide-react'
+import { Save, Loader2, ArrowLeft, Heart, Sparkles, Brain, TrendingUp, Eye, EyeOff, Zap, Calendar, Volume2 } from 'lucide-react'
 import { format } from 'date-fns'
 import VoiceRecorder from '@/components/voice/VoiceRecorder'
 import type { JournalEntry } from '@/types/database'
@@ -26,7 +26,6 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     return format(new Date(), 'yyyy-MM-dd')
   })
   const [isLoading, setIsLoading] = useState(false)
-  const [isRecording, setIsRecording] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -388,24 +387,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     router.push('/dashboard')
   }, [hasUnsavedChanges, content, currentAnalysis, title, entry?.id, supabase, router, performAutoSave])
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      setIsRecording(true)
-      
-      // Simple recording implementation
-      // In a real app, you'd use MediaRecorder API
-      setTimeout(() => {
-        setIsRecording(false)
-        stream.getTracks().forEach(track => track.stop())
-        // This would normally send audio to OpenAI Whisper API
-        const newContent = content + '\n[Voice note recorded - transcription would appear here]'
-        handleContentChange(newContent)
-      }, 5000)
-    } catch (error) {
-      console.error('Recording failed:', error)
-    }
-  }
+
 
   const formatLastSaved = () => {
     if (!lastSaved) return ''
@@ -570,24 +552,6 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
                     className="min-h-[500px] w-full resize-none border-0 bg-transparent text-base leading-relaxed placeholder:text-muted-foreground/70 focus:outline-none"
                     autoFocus
                   />
-                  
-                  {/* Voice input button */}
-                  <button
-                    onClick={startRecording}
-                    disabled={isRecording}
-                    className={`absolute bottom-4 right-4 rounded-full p-4 transition-all duration-200 shadow-lg ${
-                      isRecording 
-                        ? 'bg-red-500 text-white scale-110' 
-                        : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105'
-                    }`}
-                    title={isRecording ? 'Recording...' : 'Record voice note'}
-                  >
-                    {isRecording ? (
-                      <MicOff className="h-5 w-5" />
-                    ) : (
-                      <Mic className="h-5 w-5" />
-                    )}
-                  </button>
                 </div>
               </div>
 
