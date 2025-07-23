@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { analyzeEmotionAPI, calculateMoodScore, getEmotionalInsights } from '@/services/emotion-analysis-client'
-import { Save, Mic, MicOff, Loader2, ArrowLeft, Heart, Sparkles, Brain, TrendingUp, Eye, EyeOff, Zap, Calendar } from 'lucide-react'
+import { Save, Mic, MicOff, Loader2, ArrowLeft, Heart, Sparkles, Brain, TrendingUp, Eye, EyeOff, Zap, Calendar, Volume2 } from 'lucide-react'
 import { format } from 'date-fns'
+import VoiceRecorder from '@/components/voice/VoiceRecorder'
 import type { JournalEntry } from '@/types/database'
 import type { SentimentAnalysis } from '@/types/emotions'
 import Link from 'next/link'
@@ -32,6 +33,10 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
   const [currentAnalysis, setCurrentAnalysis] = useState<SentimentAnalysis | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showInsights, setShowInsights] = useState(false)
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false)
+  const [voiceTranscription, setVoiceTranscription] = useState('')
+  const [audioUrl, setAudioUrl] = useState(entry?.audio_url || '')
+  const [audioPath, setAudioPath] = useState(entry?.audio_path || '')
   
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -51,6 +56,27 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
       }
     }
   }, [searchParams, entry?.id])
+  // Handle voice transcription completion
+  const handleVoiceTranscription = (transcription: string, audioUrlResult: string, audioPathResult: string) => {
+    setVoiceTranscription(transcription)
+    setAudioUrl(audioUrlResult)
+    setAudioPath(audioPathResult)
+    
+    // Add transcription to content
+    const newContent = content + (content ? '\n\n' : '') + transcription
+    handleContentChange(newContent)
+    
+    // Hide voice recorder
+    setShowVoiceRecorder(false)
+    
+    console.log('✅ Voice transcription completed:', transcription)
+  }
+
+  // Handle voice recording error
+  const handleVoiceError = (error: string) => {
+    console.error('Voice recording error:', error)
+    alert(`Voice recording failed: ${error}`)
+  }
 
   // Load existing analysis from database entry
   useEffect(() => {
@@ -113,6 +139,16 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
         title: currentTitle || null,
         content: currentContent,
         updated_at: new Date().toISOString()
+      }
+
+      // Add audio data if available
+      if (audioUrl && audioPath) {
+        entryData.audio_url = audioUrl
+        entryData.audio_path = audioPath
+        if (voiceTranscription) {
+          entryData.transcription_text = voiceTranscription
+          entryData.transcription_model = process.env.NEXT_PUBLIC_OPENAI_TRANSCRIPTION_MODEL || 'gpt-4o-mini-transcribe'
+        }
       }
 
       // If this is a new entry with a custom date, set created_at
@@ -187,6 +223,16 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
           emotion_data: analysis.emotions,
           emotions: analysis.emotionalThemes,
           updated_at: new Date().toISOString()
+        }
+
+        // Add audio data if available
+        if (audioUrl && audioPath) {
+          entryData.audio_url = audioUrl
+          entryData.audio_path = audioPath
+          if (voiceTranscription) {
+            entryData.transcription_text = voiceTranscription
+            entryData.transcription_model = process.env.NEXT_PUBLIC_OPENAI_TRANSCRIPTION_MODEL || 'gpt-4o-mini-transcribe'
+          }
         }
 
         // If this is a new entry with a custom date, set created_at
@@ -569,6 +615,86 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
                   {lastSaved && !hasUnsavedChanges && !isSaving && <span className="text-emerald-600">Saved</span>}
                 </div>
               </div>
+
+              {/* Voice Recorder */}
+              {showVoiceRecorder && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Volume2 className="h-5 w-5 text-primary" />
+                      Voice Recording
+                    </h3>
+                    <button
+                      onClick={() => setShowVoiceRecorder(false)}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  
+                  <VoiceRecorder
+                    onTranscriptionComplete={handleVoiceTranscription}
+                    onError={handleVoiceError}
+                    disabled={isSaving || isAnalyzing}
+                  />
+                </div>
+              )}
+
+              {/* Voice Recording Toggle */}
+              {!showVoiceRecorder && (
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setShowVoiceRecorder(true)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-all duration-200"
+                  >
+                    <Volume2 className="h-4 w-4" />
+                    Add Voice Recording
+                  </button>
+                </div>
+              )}
+
+              {/* Existing Audio Display */}
+              {audioUrl && !showVoiceRecorder && (
+                <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <Volume2 className="h-4 w-4 text-primary" />
+                      Voice Recording
+                    </h4>
+                    {entry?.transcription_text && (
+                      <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+                        Transcribed
+                      </span>
+                    )}
+                  </div>
+                  
+                  <audio 
+                    controls 
+                    src={audioUrl}
+                    className="w-full mb-3"
+                    preload="metadata"
+                  >
+                    Your browser does not support audio playback.
+                  </audio>
+                  
+                  {entry?.transcription_text && (
+                    <div className="text-sm text-muted-foreground">
+                      <p className="font-medium mb-1">Transcription:</p>
+                      <p className="italic">{entry.transcription_text}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2 mt-3">
+                    <a
+                      href={audioUrl}
+                      download={`journal-audio-${entry?.id || 'new'}.webm`}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Download Audio
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

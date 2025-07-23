@@ -45,6 +45,11 @@ export interface Database {
           sentiment: string | null
           emotion_data: Json | null
           emotions: string[] | null
+          audio_url: string | null
+          audio_path: string | null
+          audio_duration: number | null
+          transcription_text: string | null
+          transcription_model: string | null
           created_at: string
           updated_at: string
         }
@@ -57,6 +62,11 @@ export interface Database {
           sentiment?: string | null
           emotion_data?: Json | null
           emotions?: string[] | null
+          audio_url?: string | null
+          audio_path?: string | null
+          audio_duration?: number | null
+          transcription_text?: string | null
+          transcription_model?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -69,6 +79,11 @@ export interface Database {
           sentiment?: string | null
           emotion_data?: Json | null
           emotions?: string[] | null
+          audio_url?: string | null
+          audio_path?: string | null
+          audio_duration?: number | null
+          transcription_text?: string | null
+          transcription_model?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -106,6 +121,56 @@ export interface Database {
           keywords?: string[] | null
           confidence?: number
           created_at?: string
+        }
+      }
+      audio_recordings: {
+        Row: {
+          id: string
+          entry_id: string
+          user_id: string
+          file_name: string
+          file_size: number
+          mime_type: string
+          duration: number | null
+          storage_path: string
+          public_url: string
+          transcription_text: string | null
+          transcription_model: string | null
+          transcription_confidence: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          entry_id: string
+          user_id: string
+          file_name: string
+          file_size: number
+          mime_type: string
+          duration?: number | null
+          storage_path: string
+          public_url: string
+          transcription_text?: string | null
+          transcription_model?: string | null
+          transcription_confidence?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          entry_id?: string
+          user_id?: string
+          file_name?: string
+          file_size?: number
+          mime_type?: string
+          duration?: number | null
+          storage_path?: string
+          public_url?: string
+          transcription_text?: string | null
+          transcription_model?: string | null
+          transcription_confidence?: number | null
+          created_at?: string
+          updated_at?: string
         }
       }
       goals: {
@@ -250,6 +315,7 @@ export type UpdateTables<T extends keyof Database['public']['Tables']> = Databas
 export type Profile = Tables<'profiles'>
 export type JournalEntry = Tables<'journal_entries'>
 export type EmotionAnalysis = Tables<'emotion_analysis'>
+export type AudioRecording = Tables<'audio_recordings'>
 export type Goal = Tables<'goals'>
 export type UserStreak = Tables<'user_streaks'>
 export type MoodSummary = Tables<'mood_summaries'>
