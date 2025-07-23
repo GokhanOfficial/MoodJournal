@@ -198,16 +198,26 @@ class NotificationService {
 
     try {
       const registration = await navigator.serviceWorker.ready
-      await registration.showNotification(payload.title, {
+      const notificationOptions: NotificationOptions = {
         body: payload.message,
         icon: payload.icon || '/icon-192x192.png',
         badge: payload.badge || '/badge-72x72.png',
         tag: payload.tag,
         data: payload.data,
-        actions: payload.actions,
-        requireInteraction: payload.requireInteraction || false,
-        vibrate: [200, 100, 200]
-      })
+        requireInteraction: payload.requireInteraction || false
+      }
+      
+      // Add actions if supported and provided
+      if (payload.actions) {
+        (notificationOptions as any).actions = payload.actions
+      }
+      
+      // Add vibrate if supported
+      if ('vibrate' in navigator) {
+        (notificationOptions as any).vibrate = [200, 100, 200]
+      }
+      
+      await registration.showNotification(payload.title, notificationOptions)
     } catch (error) {
       console.error('Error showing notification:', error)
     }

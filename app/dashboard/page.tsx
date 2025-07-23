@@ -10,6 +10,7 @@ import MoodTrendsChart from '@/components/analytics/MoodTrendsChart'
 import GoalsTracker from '@/components/goals/GoalsTracker'
 import type { JournalEntry } from '@/types/database'
 import { getUserStreak } from '@/lib/streak-calculator'
+import TherapistChat from '@/components/therapist/TherapistChat'
 
 export default function DashboardPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([])
@@ -148,22 +149,25 @@ export default function DashboardPage() {
                 Analytics
               </Link>
               
-              <Link href="/settings" className="btn-ghost">
-                <User className="mr-2 h-4 w-4" />
-                Settings
-              </Link>
-              
               <Link href="/journal/new" className="btn-primary">
                 <Plus className="mr-2 h-4 w-4" />
                 New Entry
               </Link>
               
+              <Link
+                href="/settings"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-border/40 bg-background/50 hover:bg-muted/50 transition-colors"
+                title="Settings"
+              >
+                <User className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+              </Link>
+              
               <button
                 onClick={handleSignOut}
-                className="btn-ghost p-3"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-border/40 bg-background/50 hover:bg-muted/50 transition-colors"
                 title="Sign out"
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
               </button>
             </div>
           </div>
@@ -248,6 +252,11 @@ export default function DashboardPage() {
         {/* Mood Trends Chart */}
         <div className="mb-8">
           <MoodTrendsChart timeRange="30d" />
+        </div>
+
+        {/* Therapist Area */}
+        <div className="mb-8">
+          <TherapistChat />
         </div>
 
         {/* Today's Entries */}

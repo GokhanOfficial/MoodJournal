@@ -10,6 +10,9 @@ import { Calendar, TrendingUp, PieChart as PieChartIcon, Clock, BookOpen, Heart,
 import MoodTrendsChart from '@/components/analytics/MoodTrendsChart'
 import type { JournalEntry } from '@/types/database'
 import { getUserStreak } from '@/lib/streak-calculator'
+import AdvancedInsightsPanel from '@/components/analytics/AdvancedInsightsPanel'
+import MoodCorrelationAnalysis from '@/components/analytics/MoodCorrelationAnalysis'
+import EmotionalInsightsSummary from '@/components/analytics/EmotionalInsightsSummary'
 
 interface AnalyticsData {
   totalEntries: number
@@ -280,6 +283,15 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Emotional Insights Summary */}
+            <EmotionalInsightsSummary timeRange={timeRange} />
+
+            {/* Advanced Analytics */}
+            {/* <AdvancedInsightsPanel timeRange={timeRange} /> */}
+
+            {/* Mood Correlation Analysis */}
+            {/* <MoodCorrelationAnalysis timeRange={timeRange} /> */}
 
             {/* Mood Trends Chart */}
             <MoodTrendsChart timeRange={timeRange} />

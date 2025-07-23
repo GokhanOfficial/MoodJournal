@@ -94,14 +94,14 @@ export async function POST(request: NextRequest) {
                 message: notificationPayload.message,
                 delivery_method: 'browser_push',
                 delivery_status: 'failed',
-                metadata: { error: pushError.message }
+                metadata: { error: pushError instanceof Error ? pushError.message : String(pushError) }
               })
 
             results.push({ 
               reminderId: reminder.id, 
               status: 'failed', 
               method: 'browser_push',
-              error: pushError.message 
+              error: pushError instanceof Error ? pushError.message : String(pushError) 
             })
           }
         }
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
         results.push({ 
           reminderId: reminder.id, 
           status: 'error', 
-          error: error.message 
+          error: error instanceof Error ? error.message : String(error) 
         })
       }
     }
@@ -153,15 +153,15 @@ export async function POST(request: NextRequest) {
 
 function getNotificationTitle(reminder: ReminderDueForSending): string {
   switch (reminder.reminder_type) {
-    case 'daily_reminder':
+    case 'daily':
       return 'Time to Journal 📝'
     case 'goal_deadline':
       return 'Goal Deadline Approaching 🎯'
     case 'streak_protection':
       return 'Don\'t Break Your Streak! 🔥'
-    case 'mood_pattern':
+    case 'mood_check':
       return 'Mood Check-in 💭'
-    case 'weekly_insight':
+    case 'weekly':
       return 'Weekly Insights Ready 📊'
     default:
       return reminder.title || 'MoodJournal Reminder'
@@ -170,15 +170,15 @@ function getNotificationTitle(reminder: ReminderDueForSending): string {
 
 function getNotificationMessage(reminder: ReminderDueForSending): string {
   switch (reminder.reminder_type) {
-    case 'daily_reminder':
+    case 'daily':
       return 'Take a moment to reflect on your day and record your thoughts.'
     case 'goal_deadline':
       return `Your goal "${reminder.title}" deadline is approaching. Check your progress!`
     case 'streak_protection':
       return 'You haven\'t journaled today yet. Keep your writing streak alive!'
-    case 'mood_pattern':
+    case 'mood_check':
       return 'How are you feeling right now? Take a moment to check in with yourself.'
-    case 'weekly_insight':
+    case 'weekly':
       return 'Your weekly mood insights and patterns are ready to view.'
     default:
       return reminder.description || 'You have a reminder from MoodJournal.'
@@ -187,14 +187,13 @@ function getNotificationMessage(reminder: ReminderDueForSending): string {
 
 function getNotificationUrl(reminderType: string): string {
   switch (reminderType) {
-    case 'daily_reminder':
+    case 'daily':
     case 'streak_protection':
     case 'mood_check':
       return '/journal/new'
     case 'goal_deadline':
       return '/dashboard'
-    case 'mood_pattern':
-    case 'weekly_insight':
+    case 'weekly':
       return '/analytics'
     default:
       return '/dashboard'

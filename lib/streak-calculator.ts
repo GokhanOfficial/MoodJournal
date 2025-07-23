@@ -32,9 +32,10 @@ export async function calculateUserStreak(userId: string): Promise<StreakData> {
     }
 
     // Get unique dates (ignore time, only consider dates)
-    const uniqueDates = [...new Set(entries.map(entry => {
+    const uniqueDateSet = new Set(entries.map(entry => {
       return new Date(entry.created_at).toDateString()
-    }))].sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+    }))
+    const uniqueDates = Array.from(uniqueDateSet).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
 
     if (uniqueDates.length === 0) {
       return { currentStreak: 0, longestStreak: 0, lastEntryDate: null }
