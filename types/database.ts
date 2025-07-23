@@ -41,6 +41,7 @@ export interface Database {
           user_id: string
           title: string | null
           content: string
+          content_html: string | null
           mood_score: number | null
           sentiment: string | null
           emotion_data: Json | null
@@ -58,6 +59,7 @@ export interface Database {
           user_id: string
           title?: string | null
           content: string
+          content_html?: string | null
           mood_score?: number | null
           sentiment?: string | null
           emotion_data?: Json | null
@@ -75,6 +77,7 @@ export interface Database {
           user_id?: string
           title?: string | null
           content?: string
+          content_html?: string | null
           mood_score?: number | null
           sentiment?: string | null
           emotion_data?: Json | null

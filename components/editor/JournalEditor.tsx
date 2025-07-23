@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase'
 import { analyzeEmotionAPI, calculateMoodScore, getEmotionalInsights } from '@/services/emotion-analysis-client'
 import { Save, Loader2, ArrowLeft, Heart, Sparkles, Brain, TrendingUp, Eye, EyeOff, Zap, Calendar, Volume2 } from 'lucide-react'
 import { format } from 'date-fns'
+import RichTextEditor from '@/components/editor/RichTextEditor'
 import VoiceRecorder from '@/components/voice/VoiceRecorder'
 import type { JournalEntry } from '@/types/database'
 import type { SentimentAnalysis } from '@/types/emotions'
@@ -18,7 +19,7 @@ interface JournalEditorProps {
 
 export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
   const [title, setTitle] = useState(entry?.title || '')
-  const [content, setContent] = useState(entry?.content || '')
+  const [content, setContent] = useState(entry?.content_html || entry?.content || '')
   const [entryDate, setEntryDate] = useState(() => {
     if (entry?.created_at) {
       return format(new Date(entry.created_at), 'yyyy-MM-dd')
@@ -133,10 +134,13 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      const plainTextContent = getTextFromHtml(currentContent)
+      
       let entryData: any = {
         user_id: user.id,
         title: currentTitle || null,
-        content: currentContent,
+        content: plainTextContent, // Store plain text for backward compatibility
+        content_html: currentContent, // Store HTML content for rich text
         updated_at: new Date().toISOString()
       }
 
@@ -196,7 +200,9 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
 
   // Manual mood analysis function
   const performMoodAnalysis = useCallback(async () => {
-    if (!content.trim() || content.trim().length < 20) {
+    const plainText = getTextFromHtml(content)
+    
+    if (!plainText.trim() || plainText.trim().length < 20) {
       alert('Please write at least 20 characters for mood analysis.')
       return
     }
@@ -205,7 +211,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     console.log('🧠 Starting manual mood analysis...')
     
     try {
-      const analysis = await analyzeEmotionAPI(content)
+      const analysis = await analyzeEmotionAPI(plainText)
       setCurrentAnalysis(analysis)
       
       // Save the analysis to database
@@ -216,7 +222,8 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
         const entryData: any = {
           user_id: user.id,
           title: title || null,
-          content: content,
+          content: plainText, // Store plain text for backward compatibility
+          content_html: content, // Store HTML content for rich text
           mood_score: moodScore,
           sentiment: analysis.label,
           emotion_data: analysis.emotions,
@@ -338,11 +345,12 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     }
     
     // Perform analysis if content exists and no analysis yet
-    if (content.trim().length >= 20 && !currentAnalysis) {
+    const plainText = getTextFromHtml(content)
+    if (plainText.trim().length >= 20 && !currentAnalysis) {
       console.log('🧠 Performing analysis before leaving...')
       try {
         setIsAnalyzing(true)
-        const analysis = await analyzeEmotionAPI(content)
+        const analysis = await analyzeEmotionAPI(plainText)
         
         // Save analysis to database
         const { data: { user } } = await supabase.auth.getUser()
@@ -352,7 +360,8 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
           const entryData: any = {
             user_id: user.id,
             title: title || null,
-            content: content,
+            content: plainText, // Store plain text for backward compatibility
+            content_html: content, // Store HTML content for rich text
             mood_score: moodScore,
             sentiment: analysis.label,
             emotion_data: analysis.emotions,
@@ -388,6 +397,19 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
   }, [hasUnsavedChanges, content, currentAnalysis, title, entry?.id, supabase, router, performAutoSave])
 
 
+
+  // Utility function to extract plain text from HTML
+  const getTextFromHtml = (html: string): string => {
+    if (typeof window === 'undefined') return html // Server-side fallback
+    const div = document.createElement('div')
+    div.innerHTML = html
+    return div.textContent || div.innerText || ''
+  }
+
+  // Calculate statistics from content
+  const plainTextContent = getTextFromHtml(content)
+  const wordCount = plainTextContent.trim().split(/\s+/).filter(word => word).length
+  const readingTime = Math.ceil(wordCount / 200)
 
   const formatLastSaved = () => {
     if (!lastSaved) return ''
@@ -543,16 +565,12 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
                 <label htmlFor="content" className="text-sm font-medium text-muted-foreground">
                   Your thoughts and feelings
                 </label>
-                <div className="relative">
-                  <textarea
-                    id="content"
-                    value={content}
-                    onChange={(e) => handleContentChange(e.target.value)}
-                    placeholder="How are you feeling today? Share your thoughts, experiences, emotions, or anything on your mind. Write at least 20 characters to enable mood analysis..."
-                    className="min-h-[500px] w-full resize-none border-0 bg-transparent text-base leading-relaxed placeholder:text-muted-foreground/70 focus:outline-none"
-                    autoFocus
-                  />
-                </div>
+                <RichTextEditor
+                  content={content}
+                  onChange={handleContentChange}
+                  placeholder="How are you feeling today? Share your thoughts, experiences, emotions, or anything on your mind. Write at least 20 characters to enable mood analysis..."
+                  disabled={isSaving}
+                />
               </div>
 
               {/* Statistics */}
@@ -560,15 +578,15 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
                   <span className="flex items-center gap-2">
                     <div className="h-1 w-1 rounded-full bg-blue-500" />
-                    {content.length} characters
+                    {plainTextContent.length} characters
                   </span>
                   <span className="flex items-center gap-2">
                     <div className="h-1 w-1 rounded-full bg-emerald-500" />
-                    {content.trim().split(/\s+/).filter(word => word).length} words
+                    {wordCount} words
                   </span>
                   <span className="flex items-center gap-2">
                     <div className="h-1 w-1 rounded-full bg-amber-500" />
-                    ~{Math.ceil(content.trim().split(/\s+/).filter(word => word).length / 200)} min read
+                    ~{readingTime} min read
                   </span>
                 </div>
                 
