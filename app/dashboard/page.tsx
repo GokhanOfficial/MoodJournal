@@ -134,6 +134,11 @@ export default function DashboardPage() {
                 Analytics
               </Link>
               
+              <Link href="/settings" className="btn-ghost">
+                <User className="mr-2 h-4 w-4" />
+                Settings
+              </Link>
+              
               <Link href="/journal/new" className="btn-primary">
                 <Plus className="mr-2 h-4 w-4" />
                 New Entry
