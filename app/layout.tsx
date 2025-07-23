@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import NotificationProvider from '@/components/notifications/NotificationProvider'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -33,9 +34,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <div className="relative flex min-h-screen flex-col">
-          {children}
-        </div>
+        <NotificationProvider>
+          <div className="relative flex min-h-screen flex-col">
+            {children}
+          </div>
+        </NotificationProvider>
       </body>
     </html>
   )
