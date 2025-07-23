@@ -9,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Calendar, TrendingUp, PieChart as PieChartIcon, Clock, BookOpen, Heart, Target } from 'lucide-react'
 import MoodTrendsChart from '@/components/analytics/MoodTrendsChart'
 import type { JournalEntry } from '@/types/database'
+import { getUserStreak } from '@/lib/streak-calculator'
 
 interface AnalyticsData {
   totalEntries: number
@@ -51,7 +52,7 @@ export default function AnalyticsPage() {
         .order('created_at', { ascending: true })
 
       if (entries) {
-        const analyticsData = processAnalyticsData(entries as JournalEntry[])
+        const analyticsData = await processAnalyticsData(entries as JournalEntry[], user.id)
         setData(analyticsData)
       }
     } catch (error) {
@@ -61,7 +62,7 @@ export default function AnalyticsPage() {
     }
   }
 
-  const processAnalyticsData = (entries: JournalEntry[]): AnalyticsData => {
+  const processAnalyticsData = async (entries: JournalEntry[], userId: string): Promise<AnalyticsData> => {
     const validMoods = entries.filter(e => e.mood_score).map(e => e.mood_score!)
     const averageMood = validMoods.length > 0 
       ? validMoods.reduce((sum, mood) => sum + mood, 0) / validMoods.length 
@@ -132,10 +133,12 @@ export default function AnalyticsPage() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 8)
 
-    // Streak calculation (simplified)
-    const streakData = {
-      current: Math.floor(Math.random() * 10) + 1, // TODO: Calculate actual streak
-      longest: Math.floor(Math.random() * 20) + 5,
+    // Get accurate streak data
+    const streakData = await getUserStreak(userId)
+    
+    const streakInfo = {
+      current: streakData.currentStreak,
+      longest: streakData.longestStreak,
       thisWeek: entries.filter(e => {
         const entryDate = new Date(e.created_at)
         const weekStart = startOfWeek(new Date())
@@ -150,7 +153,7 @@ export default function AnalyticsPage() {
       weeklyStats,
       writingPatterns,
       emotionFrequency,
-      streakData
+      streakData: streakInfo
     }
   }
 
