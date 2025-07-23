@@ -14,7 +14,7 @@ export default function TherapistChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
 
   // Load chat history from localStorage
   useEffect(() => {
@@ -35,9 +35,18 @@ export default function TherapistChat() {
     }
   }, [messages])
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom within chat container
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (chatContainerRef.current && messages.length > 0) {
+      const container = chatContainerRef.current
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        })
+      }, 100)
+    }
   }, [messages])
 
   // Add initial greeting when chat is first opened
@@ -196,7 +205,7 @@ export default function TherapistChat() {
         </div>
       </div>
 
-      <div className="h-96 overflow-y-auto p-4 space-y-4">
+      <div ref={chatContainerRef} className="h-96 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && !isLoading && (
           <div className="text-center py-8">
             <Bot className="h-12 w-12 text-blue-500 mx-auto mb-4" />
@@ -250,8 +259,6 @@ export default function TherapistChat() {
             </div>
           </div>
         )}
-        
-        <div ref={messagesEndRef} />
       </div>
 
       <div className="border-t border-border p-4">
