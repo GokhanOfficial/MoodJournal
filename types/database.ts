@@ -51,6 +51,12 @@ export interface Database {
           audio_duration: number | null
           transcription_text: string | null
           transcription_model: string | null
+          location_latitude: number | null
+          location_longitude: number | null
+          location_address: string | null
+          location_city: string | null
+          location_country: string | null
+          location_timezone: string | null
           created_at: string
           updated_at: string
         }
@@ -69,6 +75,12 @@ export interface Database {
           audio_duration?: number | null
           transcription_text?: string | null
           transcription_model?: string | null
+          location_latitude?: number | null
+          location_longitude?: number | null
+          location_address?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          location_timezone?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -87,6 +99,12 @@ export interface Database {
           audio_duration?: number | null
           transcription_text?: string | null
           transcription_model?: string | null
+          location_latitude?: number | null
+          location_longitude?: number | null
+          location_address?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          location_timezone?: string | null
           created_at?: string
           updated_at?: string
         }

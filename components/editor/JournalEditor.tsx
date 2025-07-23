@@ -8,6 +8,7 @@ import { Save, Loader2, ArrowLeft, Heart, Sparkles, Brain, TrendingUp, Eye, EyeO
 import { format } from 'date-fns'
 import RichTextEditor from '@/components/editor/RichTextEditor'
 import VoiceRecorder from '@/components/voice/VoiceRecorder'
+import LocationSelector, { type LocationData } from '@/components/location/LocationSelector'
 import type { JournalEntry } from '@/types/database'
 import type { SentimentAnalysis } from '@/types/emotions'
 import Link from 'next/link'
@@ -37,6 +38,19 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
   const [voiceTranscription, setVoiceTranscription] = useState('')
   const [audioUrl, setAudioUrl] = useState(entry?.audio_url || '')
   const [audioPath, setAudioPath] = useState(entry?.audio_path || '')
+  const [location, setLocation] = useState<LocationData | null>(() => {
+    if (entry?.location_latitude && entry?.location_longitude) {
+      return {
+        latitude: entry.location_latitude,
+        longitude: entry.location_longitude,
+        address: entry.location_address || '',
+        city: entry.location_city || '',
+        country: entry.location_country || '',
+        timezone: entry.location_timezone || ''
+      }
+    }
+    return null
+  })
   
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -154,6 +168,16 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
         }
       }
 
+      // Add location data if available
+      if (location) {
+        entryData.location_latitude = location.latitude
+        entryData.location_longitude = location.longitude
+        entryData.location_address = location.address
+        entryData.location_city = location.city
+        entryData.location_country = location.country
+        entryData.location_timezone = location.timezone
+      }
+
       // If this is a new entry with a custom date, set created_at
       if (!entry?.id && entryDate !== format(new Date(), 'yyyy-MM-dd')) {
         const customDate = new Date(entryDate + 'T' + format(new Date(), 'HH:mm:ss'))
@@ -196,7 +220,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
       setIsSaving(false)
       pendingSaveRef.current = false
     }
-  }, [entry?.id, supabase, onSave, router, title, content])
+  }, [entry?.id, supabase, onSave, router, title, content, location])
 
   // Manual mood analysis function
   const performMoodAnalysis = useCallback(async () => {
@@ -241,6 +265,16 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
           }
         }
 
+        // Add location data if available
+        if (location) {
+          entryData.location_latitude = location.latitude
+          entryData.location_longitude = location.longitude
+          entryData.location_address = location.address
+          entryData.location_city = location.city
+          entryData.location_country = location.country
+          entryData.location_timezone = location.timezone
+        }
+
         // If this is a new entry with a custom date, set created_at
         if (!entry?.id && entryDate !== format(new Date(), 'yyyy-MM-dd')) {
           const customDate = new Date(entryDate + 'T' + format(new Date(), 'HH:mm:ss'))
@@ -279,7 +313,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     } finally {
       setIsAnalyzing(false)
     }
-  }, [content, title, entry?.id, supabase, onSave, router])
+  }, [content, title, entry?.id, supabase, onSave, router, location])
 
   // Handle content changes (NO auto-analysis)
   const handleContentChange = (newContent: string) => {
@@ -369,6 +403,16 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
             updated_at: new Date().toISOString()
           }
 
+          // Add location data if available
+          if (location) {
+            entryData.location_latitude = location.latitude
+            entryData.location_longitude = location.longitude
+            entryData.location_address = location.address
+            entryData.location_city = location.city
+            entryData.location_country = location.country
+            entryData.location_timezone = location.timezone
+          }
+
           // If this is a new entry with a custom date, set created_at
           if (!entry?.id && entryDate !== format(new Date(), 'yyyy-MM-dd')) {
             const customDate = new Date(entryDate + 'T' + format(new Date(), 'HH:mm:ss'))
@@ -394,7 +438,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     }
     
     router.push('/dashboard')
-  }, [hasUnsavedChanges, content, currentAnalysis, title, entry?.id, supabase, router, performAutoSave])
+  }, [hasUnsavedChanges, content, currentAnalysis, title, entry?.id, supabase, router, performAutoSave, location])
 
 
 
@@ -556,6 +600,25 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
                 {entry?.id && (
                   <p className="text-xs text-amber-600">
                     Note: Date cannot be changed for existing entries
+                  </p>
+                )}
+              </div>
+
+              {/* Location Selector */}
+              <div className="space-y-2">
+                <label htmlFor="location" className="text-sm font-medium text-muted-foreground">
+                  Location (Optional)
+                </label>
+                <LocationSelector
+                  value={location}
+                  onChange={setLocation}
+                  placeholder="Add location to your entry..."
+                  allowCurrent={!entry?.id} // Only allow current location for new entries
+                  disabled={isSaving}
+                />
+                {entry?.id && location && (
+                  <p className="text-xs text-muted-foreground">
+                    Location: {location.city && location.country ? `${location.city}, ${location.country}` : location.address}
                   </p>
                 )}
               </div>
