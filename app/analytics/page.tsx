@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
+import Link from 'next/link'
+import { ArrowLeft, BarChart3 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { Calendar, TrendingUp, BarChart3, PieChart as PieChartIcon, Clock, BookOpen, Heart, Target } from 'lucide-react'
+import { Calendar, TrendingUp, PieChart as PieChartIcon, Clock, BookOpen, Heart, Target } from 'lucide-react'
 import MoodTrendsChart from '@/components/analytics/MoodTrendsChart'
 import type { JournalEntry } from '@/types/database'
 
@@ -170,6 +172,13 @@ export default function AnalyticsPage() {
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
+              <Link
+                href="/dashboard"
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
                 <BarChart3 className="h-6 w-6 text-primary-foreground" />
               </div>
