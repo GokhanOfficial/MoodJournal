@@ -6,17 +6,17 @@
 
 :root {
   --background: 0 0% 100%;
-  --foreground: 0 0% 9%;
+  --foreground: 215 25% 27%;
   --primary: 262.1 83.3% 57.8%;
   --primary-foreground: 210 40% 98%;
-  --secondary: 220 14.3% 95.9%;
-  --secondary-foreground: 0 0% 15%;
-  --muted: 220 14.3% 95.9%;
-  --muted-foreground: 0 0% 45%;
-  --accent: 220 14.3% 95.9%;
-  --accent-foreground: 0 0% 15%;
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
+  --secondary: 215 27.9% 96.9%;
+  --secondary-foreground: 215 25% 27%;
+  --muted: 215 27.9% 96.9%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 215 27.9% 96.9%;
+  --accent-foreground: 215 25% 27%;
+  --border: 215 20% 91%;
+  --input: 215 20% 91%;
   --ring: 262.1 83.3% 57.8%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
@@ -53,15 +53,16 @@ body {
 }
 
 body {
-  color: rgb(var(--foreground));
-  background: rgb(var(--background));
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-image: 
-    radial-gradient(circle at 25px 25px, rgba(139, 92, 246, 0.1) 2px, transparent 0),
-    radial-gradient(circle at 75px 75px, rgba(139, 92, 246, 0.05) 2px, transparent 0);
-  background-size: 100px 100px;
+    radial-gradient(circle at 25px 25px, rgba(139, 92, 246, 0.08) 2px, transparent 0),
+    radial-gradient(circle at 75px 75px, rgba(139, 92, 246, 0.04) 2px, transparent 0),
+    linear-gradient(135deg, rgba(139, 92, 246, 0.02) 0%, rgba(59, 130, 246, 0.02) 50%, rgba(16, 185, 129, 0.02) 100%);
+  background-size: 100px 100px, 100px 100px, 100% 100%;
 }
 
 /* Custom scrollbar */
