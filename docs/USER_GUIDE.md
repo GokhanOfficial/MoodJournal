@@ -39,16 +39,10 @@
 3. **Database Setup**
    - Go to your Supabase dashboard
    - Navigate to SQL Editor
-   - Run each migration file in order (001 through 010)
-   - Or run: `npx supabase db push` if CLI is configured
+   - Copy and paste the entire contents of `supabase/database-setup.sql`
+   - Click "Run" to execute the complete database setup
 
-4. **Storage Setup**
-   Run the setup script:
-   ```bash
-   ./scripts/setup.sh
-   ```
-
-5. **Start Development**
+4. **Start Development**
    ```bash
    npm run dev
    ```

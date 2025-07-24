@@ -61,10 +61,10 @@ An intelligent personal journaling application that uses advanced AI to analyze 
    
    Add your API keys and database URLs to `.env.local`
 
-3. **Set up database and storage**
-   ```bash
-   ./scripts/setup.sh
-   ```
+3. **Set up database**
+   - Go to Supabase dashboard > SQL Editor
+   - Copy and paste `supabase/database-setup.sql`
+   - Click "Run" to create all tables and policies
 
 4. **Start development server**
    ```bash
@@ -89,11 +89,11 @@ Open [http://localhost:3000](http://localhost:3000) to start journaling!
 │   ├── FEATURES.md        # Feature documentation
 │   └── TROUBLESHOOTING.md # Common issues & solutions
 ├── lib/                   # Utility functions and clients
-├── scripts/               # Setup and maintenance scripts
-│   ├── setup.sh          # Complete project setup
+├── scripts/               # Maintenance scripts
 │   └── process-notifications.sh # Notification processing
 ├── services/              # Business logic and API calls
-├── supabase/             # Database migrations (001-010)
+├── supabase/              # Database setup
+│   └── database-setup.sql # Complete database schema
 └── types/                # TypeScript type definitions
 ```
 
@@ -158,7 +158,7 @@ OPENWEATHERMAP_API_KEY=your_weather_api_key
 
 - **Documentation**: Check the [docs/](docs/) directory for comprehensive guides
 - **Issues**: Report bugs or request features via GitHub issues
-- **Setup Help**: Run `./scripts/setup.sh` for automated setup assistance
+- **Setup Help**: Single SQL file setup - just copy and paste in Supabase dashboard
 
 ## 🎉 Getting Started
 
