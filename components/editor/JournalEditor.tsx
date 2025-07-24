@@ -497,7 +497,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     if (!score) return 'text-gray-500'
     if (score <= 2) return 'text-red-500'
     if (score <= 4) return 'text-orange-500'
-    if (score <= 6) return 'text-yellow-500'
+    if (score <= 6) return 'text-amber-600'
     if (score <= 8) return 'text-green-500'
     return 'text-emerald-500'
   }

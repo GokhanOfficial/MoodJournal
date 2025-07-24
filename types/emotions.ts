@@ -47,11 +47,11 @@ export const getMoodLevel = (score: number): MoodLevel => {
 
 export const getMoodColor = (level: MoodLevel): string => {
   const colors = {
-    terrible: '#EF4444', // red-500
-    poor: '#F97316',     // orange-500
-    neutral: '#F59E0B',  // amber-500
-    good: '#84CC16',     // lime-500
-    excellent: '#10B981' // green-500
+    terrible: '#B91C1C', // red-700 - readable in light mode
+    poor: '#DC2626',     // red-600 - readable in light mode  
+    neutral: '#D97706',  // amber-600 - readable in light mode (replaces problematic yellow)
+    good: '#65A30D',     // lime-600 - readable in light mode
+    excellent: '#059669' // emerald-600 - readable in light mode
   }
   return colors[level]
 }

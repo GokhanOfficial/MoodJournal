@@ -6,15 +6,15 @@
 
 :root {
   --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  --foreground: 0 0% 9%;
   --primary: 262.1 83.3% 57.8%;
   --primary-foreground: 210 40% 98%;
   --secondary: 220 14.3% 95.9%;
-  --secondary-foreground: 220.9 39.3% 11%;
+  --secondary-foreground: 0 0% 15%;
   --muted: 220 14.3% 95.9%;
-  --muted-foreground: 220 8.9% 46.1%;
+  --muted-foreground: 0 0% 45%;
   --accent: 220 14.3% 95.9%;
-  --accent-foreground: 220.9 39.3% 11%;
+  --accent-foreground: 0 0% 15%;
   --border: 220 13% 91%;
   --input: 220 13% 91%;
   --ring: 262.1 83.3% 57.8%;
@@ -197,35 +197,85 @@ body {
   box-shadow: 0 0 0 2px hsl(var(--ring));
 }
 
-/* Mood colors */
+/* Mood colors - Light mode with better readability */
 .mood-excellent {
-  color: #10B981;
-  border-color: #10B981;
-  background-color: rgb(16 185 129 / 0.1);
+  color: #059669;
+  border-color: #059669;
+  background-color: rgb(5 150 105 / 0.1);
 }
 
 .mood-good {
-  color: #84CC16;
-  border-color: #84CC16;
-  background-color: rgb(132 204 22 / 0.1);
+  color: #65A30D;
+  border-color: #65A30D;
+  background-color: rgb(101 163 13 / 0.1);
 }
 
 .mood-neutral {
-  color: #F59E0B;
-  border-color: #F59E0B;
-  background-color: rgb(245 158 11 / 0.1);
+  color: #D97706;
+  border-color: #D97706;
+  background-color: rgb(217 119 6 / 0.1);
 }
 
 .mood-poor {
-  color: #F97316;
-  border-color: #F97316;
-  background-color: rgb(249 115 22 / 0.1);
+  color: #DC2626;
+  border-color: #DC2626;
+  background-color: rgb(220 38 38 / 0.1);
 }
 
 .mood-terrible {
-  color: #EF4444;
-  border-color: #EF4444;
-  background-color: rgb(239 68 68 / 0.1);
+  color: #B91C1C;
+  border-color: #B91C1C;
+  background-color: rgb(185 28 28 / 0.1);
+}
+
+/* Force override any remaining yellow colors for readability */
+.text-yellow-500,
+.text-yellow-400,
+.text-yellow-600 {
+  color: #d97706 !important; /* amber-600 - readable */
+}
+
+.bg-yellow-500,
+.bg-yellow-400,
+.bg-yellow-600 {
+  background-color: #d97706 !important; /* amber-600 - readable */
+}
+
+.border-yellow-500,
+.border-yellow-400,
+.border-yellow-600 {
+  border-color: #d97706 !important; /* amber-600 - readable */
+}
+
+/* Dark mode mood colors - enhanced visibility */
+.dark .mood-excellent {
+  color: #34D399;
+  border-color: #34D399;
+  background-color: rgb(52 211 153 / 0.15);
+}
+
+.dark .mood-good {
+  color: #A3E635;
+  border-color: #A3E635;
+  background-color: rgb(163 230 53 / 0.15);
+}
+
+.dark .mood-neutral {
+  color: #FBBF24;
+  border-color: #FBBF24;
+  background-color: rgb(251 191 36 / 0.15);
+}
+
+.dark .mood-poor {
+  color: #FB923C;
+  border-color: #FB923C;
+  background-color: rgb(251 146 60 / 0.15);
+}
+
+.dark .mood-terrible {
+  color: #F87171;
+  border-color: #F87171;
+  background-color: rgb(248 113 113 / 0.15);
 }
 
 /* Animations */
@@ -379,7 +429,7 @@ body {
 }
 
 .ProseMirror mark {
-  background-color: #fef08a;
+  background-color: #fef0e6;
   border-radius: 0.125rem;
   padding: 0.125rem 0.25rem;
 }

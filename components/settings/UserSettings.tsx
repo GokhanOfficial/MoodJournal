@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
-import { User, Mail, Lock, Bell, Shield, Trash2, Eye, EyeOff, Save, Camera } from 'lucide-react'
+import { User, Mail, Lock, Bell, Shield, Trash2, Eye, EyeOff, Save, Camera, Palette } from 'lucide-react'
 import NotificationSettings from '@/components/notifications/NotificationSettings'
+import ThemeSelector from '@/components/settings/ThemeSelector'
 
 interface UserProfile {
   id: string
@@ -191,6 +192,7 @@ export default function UserSettings() {
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
+    { id: 'theme', label: 'Theme', icon: Palette },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy & Data', icon: Shield }
   ]
@@ -398,6 +400,10 @@ export default function UserSettings() {
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === 'theme' && (
+            <ThemeSelector />
           )}
 
           {activeTab === 'notifications' && (

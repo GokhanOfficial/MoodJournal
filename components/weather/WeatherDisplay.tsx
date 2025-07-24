@@ -37,7 +37,7 @@ export default function WeatherDisplay({
     
     switch (main?.toLowerCase()) {
       case 'clear':
-        return <Sun className={`${iconClass} text-yellow-500`} />
+        return <Sun className={`${iconClass} text-amber-500`} />
       case 'clouds':
         return <Cloud className={`${iconClass} text-gray-500`} />
       case 'rain':
@@ -185,7 +185,7 @@ export default function WeatherDisplay({
           
           {weatherData.uv_index !== null && (
             <div className="flex items-center gap-2 text-sm">
-              <Sun className="h-4 w-4 text-yellow-500" />
+              <Sun className="h-4 w-4 text-amber-500" />
               <span className="text-muted-foreground">UV Index:</span>
               <span className="font-medium">{Math.round(weatherData.uv_index * 10) / 10}</span>
             </div>

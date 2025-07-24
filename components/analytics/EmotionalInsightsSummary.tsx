@@ -82,7 +82,7 @@ export default function EmotionalInsightsSummary({ timeRange }: EmotionalInsight
       value: `${range.toFixed(1)}`,
       description: range < 3 ? 'Stable emotions' : range < 6 ? 'Moderate variability' : 'High emotional range',
       icon: <TrendingUp className="h-5 w-5" />,
-      color: range < 3 ? 'text-emerald-500' : range < 6 ? 'text-yellow-500' : 'text-orange-500'
+      color: range < 3 ? 'text-emerald-500' : range < 6 ? 'text-amber-600' : 'text-orange-500'
     })
 
     // Emotional Growth Indicator
@@ -117,7 +117,7 @@ export default function EmotionalInsightsSummary({ timeRange }: EmotionalInsight
       value: `${Math.round(consistency)}%`,
       description: consistency > 70 ? 'Excellent consistency' : consistency > 40 ? 'Good consistency' : 'Room for improvement',
       icon: <Calendar className="h-5 w-5" />,
-      color: consistency > 70 ? 'text-emerald-500' : consistency > 40 ? 'text-yellow-500' : 'text-orange-500'
+      color: consistency > 70 ? 'text-emerald-500' : consistency > 40 ? 'text-amber-600' : 'text-orange-500'
     })
 
     // Emotional Vocabulary
@@ -145,7 +145,7 @@ export default function EmotionalInsightsSummary({ timeRange }: EmotionalInsight
       value: `${Math.round(positiveRatio)}%`,
       description: positiveRatio > 50 ? 'Abundant joy' : positiveRatio > 30 ? 'Regular happiness' : 'Finding bright spots',
       icon: <Target className="h-5 w-5" />,
-      color: positiveRatio > 50 ? 'text-emerald-500' : positiveRatio > 30 ? 'text-yellow-500' : 'text-orange-500'
+      color: positiveRatio > 50 ? 'text-emerald-500' : positiveRatio > 30 ? 'text-amber-600' : 'text-orange-500'
     })
 
     // Reflection Depth (based on word count)

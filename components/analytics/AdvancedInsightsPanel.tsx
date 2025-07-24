@@ -53,13 +53,13 @@ export default function AdvancedInsightsPanel({ timeRange }: AdvancedInsightsPro
 
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.8) return 'text-emerald-500'
-    if (confidence >= 0.6) return 'text-yellow-500'
+    if (confidence >= 0.6) return 'text-amber-600'
     return 'text-orange-500'
   }
 
   const getStabilityColor = (score: number) => {
     if (score >= 0.7) return 'text-emerald-500'
-    if (score >= 0.4) return 'text-yellow-500'
+    if (score >= 0.4) return 'text-amber-600'
     return 'text-red-500'
   }
 
@@ -257,7 +257,7 @@ export default function AdvancedInsightsPanel({ timeRange }: AdvancedInsightsPro
         {activeTab === 'insights' && (
           <div className="space-y-4">
             <h4 className="font-semibold flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-yellow-500" />
+              <Lightbulb className="h-5 w-5 text-amber-600" />
               AI-Generated Insights
             </h4>
             {insights.aiInsights.map((insight, index) => (

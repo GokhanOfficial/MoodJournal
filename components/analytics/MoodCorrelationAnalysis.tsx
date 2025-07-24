@@ -147,7 +147,7 @@ export default function MoodCorrelationAnalysis({ timeRange }: MoodCorrelationAn
     const intensity = value / max
     if (intensity > 0.8) return '#16a34a' // green
     if (intensity > 0.6) return '#22c55e' // light green
-    if (intensity > 0.4) return '#eab308' // yellow
+    if (intensity > 0.4) return '#d97706' // amber-600 - readable
     if (intensity > 0.2) return '#f97316' // orange
     return '#ef4444' // red
   }

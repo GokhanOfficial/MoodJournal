@@ -75,7 +75,7 @@ export default function AnalyticsPage() {
     const moodRanges = [
       { range: '1-2', label: 'Very Low', color: '#ef4444', min: 1, max: 2 },
       { range: '3-4', label: 'Low', color: '#f97316', min: 3, max: 4 },
-      { range: '5-6', label: 'Neutral', color: '#eab308', min: 5, max: 6 },
+      { range: '5-6', label: 'Neutral', color: '#d97706', min: 5, max: 6 },
       { range: '7-8', label: 'Good', color: '#22c55e', min: 7, max: 8 },
       { range: '9-10', label: 'Excellent', color: '#16a34a', min: 9, max: 10 }
     ]

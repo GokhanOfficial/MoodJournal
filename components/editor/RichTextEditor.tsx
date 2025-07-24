@@ -119,12 +119,12 @@ export default function RichTextEditor({
 
   const colors = [
     '#000000', '#374151', '#6B7280', '#9CA3AF',
-    '#EF4444', '#F97316', '#EAB308', '#22C55E',
+    '#EF4444', '#F97316', '#D97706', '#22C55E',
     '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899'
   ]
 
   const highlights = [
-    '#FEF3C7', '#FECACA', '#FED7D7', '#C7F9CC',
+    '#FEF0E6', '#FECACA', '#FED7D7', '#C7F9CC',
     '#BFDBFE', '#C4B5FD', '#F3E8FF', '#FCE7F3'
   ]
 

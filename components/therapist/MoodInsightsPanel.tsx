@@ -47,7 +47,7 @@ export default function MoodInsightsPanel({ isVisible }: MoodInsightsPanelProps)
       case 'improving':
         return 'text-emerald-500'
       default:
-        return 'text-yellow-500'
+        return 'text-amber-600'
     }
   }
 
@@ -58,7 +58,7 @@ export default function MoodInsightsPanel({ isVisible }: MoodInsightsPanelProps)
       case 'improving':
         return <TrendingDown className="h-4 w-4 text-emerald-500 rotate-180" />
       default:
-        return <div className="h-4 w-4 rounded-full bg-yellow-500" />
+        return <div className="h-4 w-4 rounded-full bg-amber-600" />
     }
   }
 
