@@ -162,7 +162,7 @@ CREATE OR REPLACE FUNCTION calculate_next_reminder_time(
     reminder_time TIME,
     reminder_days INTEGER[],
     timezone_name TEXT DEFAULT 'UTC',
-    current_time TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    ref_time TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 ) RETURNS TIMESTAMP WITH TIME ZONE AS $$
 DECLARE
     next_time TIMESTAMP WITH TIME ZONE;
@@ -172,8 +172,8 @@ DECLARE
     i INTEGER;
 BEGIN
     -- Convert current time to user's timezone
-    current_time := current_time AT TIME ZONE timezone_name;
-    current_day := EXTRACT(DOW FROM current_time); -- 0=Sunday, 6=Saturday
+    ref_time := ref_time AT TIME ZONE timezone_name;
+    current_day := EXTRACT(DOW FROM ref_time); -- 0=Sunday, 6=Saturday
     
     -- Convert to our format (1=Monday, 7=Sunday)
     current_day := CASE WHEN current_day = 0 THEN 7 ELSE current_day END;
@@ -187,8 +187,8 @@ BEGIN
             
             -- If it's today, check if the time hasn't passed yet
             IF days_ahead = 0 THEN
-                next_time := DATE_TRUNC('day', current_time) + reminder_time;
-                IF next_time > current_time THEN
+                next_time := DATE_TRUNC('day', ref_time) + reminder_time;
+                IF next_time > ref_time THEN
                     RETURN next_time AT TIME ZONE timezone_name;
                 END IF;
                 -- Time has passed today, look for next occurrence
@@ -202,7 +202,7 @@ BEGIN
                 END LOOP;
             END IF;
             
-            next_time := DATE_TRUNC('day', current_time) + INTERVAL '1 day' * days_ahead + reminder_time;
+            next_time := DATE_TRUNC('day', ref_time) + INTERVAL '1 day' * days_ahead + reminder_time;
             RETURN next_time AT TIME ZONE timezone_name;
         END IF;
     END LOOP;
@@ -212,7 +212,7 @@ BEGIN
     days_ahead := (target_day - current_day + 7) % 7;
     IF days_ahead = 0 THEN days_ahead := 7; END IF;
     
-    next_time := DATE_TRUNC('day', current_time) + INTERVAL '1 day' * days_ahead + reminder_time;
+    next_time := DATE_TRUNC('day', ref_time) + INTERVAL '1 day' * days_ahead + reminder_time;
     RETURN next_time AT TIME ZONE timezone_name;
 END;
 $$ LANGUAGE plpgsql;

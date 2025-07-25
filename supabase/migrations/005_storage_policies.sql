@@ -12,8 +12,8 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
--- Enable RLS on storage.objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Note: storage.objects RLS is already enabled by default in Supabase
+-- We only need to create policies, not enable RLS
 
 -- Policy: Allow authenticated users to upload audio files to their own folder
 CREATE POLICY "Users can upload own audio files" ON storage.objects
@@ -47,6 +47,5 @@ FOR DELETE USING (
   AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- Grant necessary permissions for storage operations
-GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO authenticated;
-GRANT SELECT ON storage.buckets TO authenticated;
+-- Note: Storage permissions are managed by Supabase automatically
+-- No need to grant permissions manually
