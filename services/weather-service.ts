@@ -1,6 +1,23 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
 import type { WeatherData } from '@/types/database'
 import { format, isAfter, subDays, isToday } from 'date-fns'
+
+// Create a service role client for weather operations
+const createServiceRoleClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Missing Supabase environment variables for service role')
+  }
+  
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  })
+}
 
 export interface WeatherResponse {
   temperature: number
@@ -87,7 +104,7 @@ class WeatherService {
     if (!this.apiKey) return null
     
     try {
-      const supabase = createServerSupabaseClient()
+      const supabase = createServiceRoleClient()
       const dateStr = format(date, 'yyyy-MM-dd')
       
       // First, try exact location match
@@ -242,7 +259,7 @@ class WeatherService {
     apiResponse?: any
   ): Promise<WeatherData | null> {
     try {
-      const supabase = createServerSupabaseClient()
+      const supabase = createServiceRoleClient()
       const dateStr = format(date, 'yyyy-MM-dd')
       
       const insertData = {
