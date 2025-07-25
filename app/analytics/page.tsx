@@ -160,6 +160,22 @@ export default function AnalyticsPage() {
     }
   }
 
+  // Custom tooltip component for PieChart
+  const CustomPieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload
+      return (
+        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+          <p className="font-medium text-foreground">{data.mood} Mood</p>
+          <p className="text-primary">
+            <span className="font-semibold">{data.count}</span> {data.count === 1 ? 'entry' : 'entries'}
+          </p>
+        </div>
+      )
+    }
+    return null
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted/20">
@@ -325,8 +341,16 @@ export default function AnalyticsPage() {
                         contentStyle={{
                           backgroundColor: 'hsl(var(--background))',
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
                         }}
+                        formatter={(value: number, name: string) => {
+                          if (name === 'entries') {
+                            return [`${value} ${value === 1 ? 'entry' : 'entries'}`, 'Journal Entries']
+                          }
+                          return [value, name]
+                        }}
+                        labelFormatter={(label: string) => `Week of ${label}`}
                       />
                       <Bar dataKey="entries" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                     </BarChart>
@@ -355,7 +379,7 @@ export default function AnalyticsPage() {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip content={<CustomPieTooltip />} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -387,7 +411,21 @@ export default function AnalyticsPage() {
                         tickLine={false}
                         axisLine={false}
                       />
-                      <Tooltip />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))'
+                        }}
+                        formatter={(value: number, name: string) => {
+                          if (name === 'count') {
+                            return [`${value} ${value === 1 ? 'entry' : 'entries'}`, 'Journal Entries']
+                          }
+                          return [value, name]
+                        }}
+                        labelFormatter={(label: string) => `Time: ${label}`}
+                      />
                       <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
