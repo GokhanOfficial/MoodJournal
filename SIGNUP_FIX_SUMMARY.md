@@ -8,6 +8,7 @@ The signup functionality was not working after implementing the admin panel and 
 2. **Complex Trigger Functions**: Multiple iterations of complex trigger functions with poor error handling
 3. **Constraint Violations**: Unique constraint violations when trying to create user_streaks records
 4. **Incomplete Profile Fields**: Missing `is_admin` and `theme_preference` fields in early versions
+5. **Migration Order Issues**: Trying to disable RLS on tables before they were created
 
 ## Solution Implemented
 
@@ -15,7 +16,15 @@ The signup functionality was not working after implementing the admin panel and 
 Combined all fixes from migrations 12-17 into a single comprehensive migration:
 - `supabase/migrations/012_merged_admin_achievements_signup_fix.sql`
 
-### 2. Disabled RLS for All Tables
+### 2. Fixed Migration Order
+Reordered the migration to:
+1. Create tables and achievements system first
+2. Disable RLS for all tables
+3. Create profile creation system
+4. Set up achievement tracking functions
+5. Fix existing users
+
+### 3. Disabled RLS for All Tables
 As requested, RLS has been disabled for all tables to ensure accessibility:
 - profiles
 - journal_entries
@@ -28,29 +37,38 @@ As requested, RLS has been disabled for all tables to ensure accessibility:
 - achievements
 - user_achievements
 
-### 3. Simplified Profile Creation System
+### 4. Simplified Profile Creation System
 Created a bulletproof profile creation system:
 - Simple `handle_new_user()` trigger function with error handling that doesn't break signup
 - Permissive approach that ignores errors during profile/streak creation
 - Service role permissions for trigger operations
 
-### 4. Comprehensive Achievements System
+### 5. Comprehensive Achievements System
 Implemented a complete achievements system:
 - Well-defined achievement categories and types
 - Proper progress tracking
 - Automatic achievement updates
 - Predefined achievements for various user activities
 
-### 5. Cleaned Up Files
+### 6. Cleaned Up Files
 Deleted unnecessary files:
 - Old migration files (12-17)
 - Test/verification SQL files from root directory
 
+## Additional Fix for Missing Column
+Added the missing `is_admin` column to the profiles table in migration 012:
+```sql
+ALTER TABLE profiles 
+ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+```
+
+This fixes the error that occurred when trying to insert into the profiles table with the `is_admin` column that didn't exist.
+
 ## Verification
 The solution can be verified by running:
 ```sql
--- In Supabase SQL Editor
-\i supabase/verify_solution.sql
+-- In Supabase SQL Editor after migrations are applied
+\i supabase/test_signup_fix.sql
 ```
 
 ## How It Works
@@ -71,8 +89,8 @@ The solution can be verified by running:
 ### New Migration
 - `supabase/migrations/012_merged_admin_achievements_signup_fix.sql` - Combined fix for all issues
 
-### Verification Script
-- `supabase/verify_solution.sql` - Script to verify the solution works correctly
+### Verification Scripts
+- `supabase/test_signup_fix.sql` - Script to verify the solution works correctly after migrations
 
 ### Deleted Files
 - `supabase/migrations/012_comprehensive_admin_achievements_fix.sql`
@@ -85,6 +103,7 @@ The solution can be verified by running:
 - `supabase/test_profile_system.sql`
 - `supabase/verify_journal_columns.sql`
 - `supabase/verify_profile_creation.sql`
+- `supabase/verify_solution.sql`
 
 ## Next Steps
 
@@ -95,15 +114,20 @@ The solution can be verified by running:
 
 2. Test user signup at `/auth/signup`
 
-3. Verify RLS is disabled and all tables are accessible
+3. Verify that the `is_admin` column has been added to the profiles table:
+   ```sql
+   SELECT column_name, data_type, is_nullable, column_default
+   FROM information_schema.columns
+   WHERE table_name = 'profiles' AND column_name = 'is_admin';
+   ```
 
-4. Check that achievements are properly tracked
+4. Check that RLS is disabled for all tables:
+   ```sql
+   SELECT tablename, relrowsecurity 
+   FROM pg_class c 
+   JOIN pg_namespace n ON c.relnamespace = n.oid 
+   WHERE n.nspname = 'public' 
+   AND tablename IN ('profiles', 'journal_entries', 'emotion_analysis', 'audio_recordings', 'goals', 'user_streaks', 'weather_data', 'mood_summaries', 'achievements', 'user_achievements');
+   ```
 
-## Benefits
-
-✅ **Stable Signup**: Bulletproof signup that never fails due to database errors
-✅ **Automatic**: Works for all new signups without any client-side code changes
-✅ **Retroactive**: Fixes existing users missing profiles
-✅ **No RLS Conflicts**: RLS disabled for all tables as requested
-✅ **Complete Solution**: Includes admin system and achievements
-✅ **Clean**: Removed unnecessary files and simplified migration history
+5. Verify that the achievements system is working correctly by creating a test journal entry and checking if achievements are tracked.

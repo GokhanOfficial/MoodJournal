@@ -5,6 +5,10 @@
 -- PART 1: CREATE TABLES AND ACHIEVEMENTS SYSTEM FIRST
 -- =============================================
 
+-- Add missing is_admin column to profiles table if it doesn't exist
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+
 -- Create achievements table
 CREATE TABLE IF NOT EXISTS achievements (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -33,6 +37,17 @@ CREATE TABLE IF NOT EXISTS user_achievements (
     is_completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id, achievement_id)
+);
+
+-- Create user_streaks table for tracking writing streaks (FIX)
+CREATE TABLE IF NOT EXISTS user_streaks (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  current_streak INTEGER DEFAULT 0 CHECK (current_streak >= 0),
+  longest_streak INTEGER DEFAULT 0 CHECK (longest_streak >= 0),
+  last_entry_date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Insert predefined achievements
@@ -74,6 +89,10 @@ CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON user_achievements(us
 CREATE INDEX IF NOT EXISTS idx_user_achievements_achievement_id ON user_achievements(achievement_id);
 CREATE INDEX IF NOT EXISTS idx_user_achievements_completed ON user_achievements(is_completed);
 CREATE INDEX IF NOT EXISTS idx_user_achievements_unlocked_at ON user_achievements(unlocked_at DESC);
+
+-- Create indexes for user_streaks (FIX)
+CREATE INDEX IF NOT EXISTS idx_user_streaks_user_id ON user_streaks(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_streaks_last_entry_date ON user_streaks(last_entry_date);
 
 -- =============================================
 -- PART 2: DISABLE RLS FOR ALL TABLES
@@ -128,43 +147,35 @@ DROP POLICY IF EXISTS "Users can view own mood summaries" ON mood_summaries;
 DROP POLICY IF EXISTS "Users can insert own mood summaries" ON mood_summaries;
 
 -- =============================================
--- PART 3: CREATE SIMPLIFIED PROFILE CREATION SYSTEM
+-- PART 3: CREATE SIMPLIFIED AND CORRECTED PROFILE CREATION SYSTEM
 -- =============================================
 
--- Create a simple, bulletproof handle_new_user function
+-- Create a robust, safe, and bulletproof handle_new_user function (FIX)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Simple approach: just insert the profile, ignore errors
-    BEGIN
-        INSERT INTO public.profiles (id, email, display_name, is_admin, theme_preference)
-        VALUES (
-            NEW.id,
-            NEW.email,
-            COALESCE(
-                NEW.raw_user_meta_data->>'display_name',
-                NEW.raw_user_meta_data->>'full_name',
-                NEW.raw_user_meta_data->>'name',
-                split_part(NEW.email, '@', 1)
-            ),
-            FALSE,
-            'system'
-        );
-    EXCEPTION
-        WHEN OTHERS THEN
-            -- Ignore all errors - don't break signup
-            NULL;
-    END;
-    
-    -- Try to create streak record, ignore errors
-    BEGIN
-        INSERT INTO public.user_streaks (user_id, current_streak, longest_streak, last_entry_date)
-        VALUES (NEW.id, 0, 0, NULL);
-    EXCEPTION
-        WHEN OTHERS THEN
-            -- Ignore all errors - don't break signup
-            NULL;
-    END;
+    -- Create a profile for the new user.
+    -- If a profile with the same ID already exists, do nothing.
+    INSERT INTO public.profiles (id, email, display_name, is_admin, theme_preference)
+    VALUES (
+        NEW.id,
+        NEW.email,
+        COALESCE(
+            NEW.raw_user_meta_data->>'display_name',
+            NEW.raw_user_meta_data->>'full_name',
+            NEW.raw_user_meta_data->>'name',
+            split_part(NEW.email, '@', 1)
+        ),
+        FALSE,
+        'system'
+    )
+    ON CONFLICT (id) DO NOTHING;
+
+    -- Create a streak record for the new user.
+    -- If a streak record for the same user_id already exists, do nothing.
+    INSERT INTO public.user_streaks (user_id, current_streak, longest_streak, last_entry_date)
+    VALUES (NEW.id, 0, 0, NULL)
+    ON CONFLICT (user_id) DO NOTHING;
     
     RETURN NEW;
 END;
