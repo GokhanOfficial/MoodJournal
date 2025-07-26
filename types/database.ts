@@ -15,6 +15,8 @@ export interface Database {
           email: string
           display_name: string | null
           avatar_url: string | null
+          is_admin: boolean
+          theme_preference: string | null
           created_at: string
           updated_at: string
         }
@@ -23,6 +25,8 @@ export interface Database {
           email: string
           display_name?: string | null
           avatar_url?: string | null
+          is_admin?: boolean
+          theme_preference?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -31,6 +35,8 @@ export interface Database {
           email?: string
           display_name?: string | null
           avatar_url?: string | null
+          is_admin?: boolean
+          theme_preference?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -367,6 +373,79 @@ export interface Database {
           created_at?: string
         }
       }
+      achievements: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          icon: string
+          category: string
+          condition_type: 'entry_count' | 'streak' | 'mood_average' | 'location_count' | 'word_count'
+          condition_value: number
+          points: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description: string
+          icon: string
+          category: string
+          condition_type: 'entry_count' | 'streak' | 'mood_average' | 'location_count' | 'word_count'
+          condition_value: number
+          points?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          icon?: string
+          category?: string
+          condition_type?: 'entry_count' | 'streak' | 'mood_average' | 'location_count' | 'word_count'
+          condition_value?: number
+          points?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_achievements: {
+        Row: {
+          id: string
+          user_id: string
+          achievement_id: string
+          earned_at: string
+          progress: number
+          is_completed: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          achievement_id: string
+          earned_at?: string
+          progress?: number
+          is_completed?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          achievement_id?: string
+          earned_at?: string
+          progress?: number
+          is_completed?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       goal_progress_view: {
@@ -409,4 +488,6 @@ export type Goal = Tables<'goals'>
 export type UserStreak = Tables<'user_streaks'>
 export type WeatherData = Tables<'weather_data'>
 export type MoodSummary = Tables<'mood_summaries'>
+export type Achievement = Tables<'achievements'>
+export type UserAchievement = Tables<'user_achievements'>
 export type GoalProgressView = Database['public']['Views']['goal_progress_view']['Row']

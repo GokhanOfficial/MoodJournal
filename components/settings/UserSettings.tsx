@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
-import { User, Mail, Lock, Bell, Shield, Trash2, Eye, EyeOff, Save, Camera, Palette } from 'lucide-react'
+import { User, Mail, Lock, Bell, Shield, Trash2, Eye, EyeOff, Save, Camera, Palette, Settings } from 'lucide-react'
 import NotificationSettings from '@/components/notifications/NotificationSettings'
 import ThemeSelector from '@/components/settings/ThemeSelector'
+import AdminDashboard from '@/components/admin/AdminDashboard'
 
 interface UserProfile {
   id: string
@@ -15,6 +16,8 @@ interface UserProfile {
   avatar_url: string | null
   created_at: string
   updated_at: string
+  is_admin: boolean
+  theme_preference: string | null
 }
 
 export default function UserSettings() {
@@ -56,13 +59,49 @@ export default function UserSettings() {
         return
       }
 
-      const userProfile = profileData || {
-        id: user.id,
-        email: user.email || '',
-        display_name: null,
-        avatar_url: null,
-        created_at: user.created_at,
-        updated_at: user.updated_at || user.created_at
+      let userProfile = profileData
+
+      // If no profile exists, create one
+      if (!profileData) {
+        try {
+          // Use the stable RPC function to create profile
+          const { data: rpcResult, error: rpcError } = await supabase
+            .rpc('create_user_profile')
+
+          if (rpcError) {
+            console.error('Error creating profile via RPC:', rpcError)
+            throw rpcError
+          }
+
+          console.log('Profile created successfully via RPC')
+
+          // Fetch the newly created profile
+          const { data: newProfile, error: fetchError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+
+          if (fetchError) {
+            console.error('Error fetching created profile:', fetchError)
+            throw fetchError
+          }
+
+          userProfile = newProfile
+        } catch (createError) {
+          console.error('Failed to create profile:', createError)
+          // Fallback to temporary profile object
+          userProfile = {
+            id: user.id,
+            email: user.email || '',
+            display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'User',
+            avatar_url: null,
+            created_at: user.created_at,
+            updated_at: user.updated_at || user.created_at,
+            is_admin: false,
+            theme_preference: 'system'
+          }
+        }
       }
 
       setProfile(userProfile)
@@ -91,7 +130,9 @@ export default function UserSettings() {
           id: profile.id,
           email: formData.email,
           display_name: formData.display_name || null,
-          avatar_url: profile.avatar_url
+          avatar_url: profile.avatar_url,
+          is_admin: profile.is_admin,
+          theme_preference: profile.theme_preference
         })
 
       if (error) {
@@ -194,7 +235,8 @@ export default function UserSettings() {
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'theme', label: 'Theme', icon: Palette },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'privacy', label: 'Privacy & Data', icon: Shield }
+    { id: 'privacy', label: 'Privacy & Data', icon: Shield },
+    ...(profile?.is_admin ? [{ id: 'admin', label: 'Admin', icon: Settings }] : [])
   ]
 
   if (loading) {
@@ -246,6 +288,9 @@ export default function UserSettings() {
                 >
                   <Icon className="h-5 w-5" />
                   {tab.label}
+                  {tab.id === 'admin' && (
+                    <Shield className="h-4 w-4 ml-auto" />
+                  )}
                 </button>
               )
             })}
@@ -302,6 +347,19 @@ export default function UserSettings() {
                     />
                   </div>
                 </div>
+
+                {/* Admin Status Display */}
+                {profile?.is_admin && (
+                  <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-primary" />
+                      <span className="font-medium text-primary">Admin Account</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      You have administrator privileges on this system.
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex gap-3">
                   <button
@@ -450,6 +508,10 @@ export default function UserSettings() {
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === 'admin' && profile?.is_admin && (
+            <AdminDashboard />
           )}
         </div>
       </div>

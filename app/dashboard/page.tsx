@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { getMoodLevel, getMoodColor } from '@/types/emotions'
-import { Plus, BookOpen, Calendar, TrendingUp, Heart, LogOut, User, BarChart3, Sparkles, Target } from 'lucide-react'
+import { Plus, BookOpen, Calendar, TrendingUp, Heart, LogOut, User, BarChart3, Sparkles, Target, Trophy } from 'lucide-react'
 import { format } from 'date-fns'
 import MoodTrendsChart from '@/components/analytics/MoodTrendsChart'
 import GoalsTracker from '@/components/goals/GoalsTracker'
@@ -142,6 +142,11 @@ export default function DashboardPage() {
               <Link href="/goals" className="btn-ghost">
                 <Target className="mr-2 h-4 w-4" />
                 Goals
+              </Link>
+              
+              <Link href="/achievements" className="btn-ghost">
+                <Trophy className="mr-2 h-4 w-4" />
+                Achievements
               </Link>
               
               <Link href="/analytics" className="btn-ghost">
@@ -418,6 +423,18 @@ export default function DashboardPage() {
                     <div>
                       <h4 className="font-medium">Manage Goals</h4>
                       <p className="text-xs text-muted-foreground">Set and track progress</p>
+                    </div>
+                  </div>
+                </Link>
+                
+                <Link href="/achievements" className="group">
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background/50 transition-all duration-200 hover:border-primary/50 hover:bg-background/80">
+                    <div className="p-2 rounded-lg bg-yellow-500/10">
+                      <Trophy className="h-4 w-4 text-yellow-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium">View Achievements</h4>
+                      <p className="text-xs text-muted-foreground">Track your progress</p>
                     </div>
                   </div>
                 </Link>
