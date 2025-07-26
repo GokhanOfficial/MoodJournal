@@ -3,19 +3,17 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
-import { getMoodLevel, getMoodColor } from '@/types/emotions'
 import { Plus, BookOpen, Calendar, TrendingUp, Heart, LogOut, User, BarChart3, Sparkles, Target, Trophy } from 'lucide-react'
 import { format } from 'date-fns'
-import MoodTrendsChart from '@/components/analytics/MoodTrendsChart'
 import GoalsTracker from '@/components/goals/GoalsTracker'
-import type { JournalEntry } from '@/types/database'
+import JournalEntriesCarousel from '@/components/journal/JournalEntriesCarousel'
 import { getUserStreak } from '@/lib/streak-calculator'
 import TherapistChat from '@/components/therapist/TherapistChat'
 
 export default function DashboardPage() {
-  const [entries, setEntries] = useState<JournalEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
+  const [userId, setUserId] = useState('')
   const [stats, setStats] = useState({
     totalEntries: 0,
     averageMood: 0,
@@ -36,19 +34,7 @@ export default function DashboardPage() {
       if (!user) return
 
       setUserEmail(user.email || '')
-
-      // Load today's entries for display
-      const today = new Date()
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
-      
-      const { data: todaysEntries } = await supabase
-        .from('journal_entries')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', startOfDay.toISOString())
-        .lt('created_at', endOfDay.toISOString())
-        .order('created_at', { ascending: false })
+      setUserId(user.id)
 
       // Load all entries for stats calculation
       const { data: allEntries } = await supabase
@@ -57,24 +43,19 @@ export default function DashboardPage() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      // Set today's entries for display
-      if (todaysEntries) {
-        setEntries(todaysEntries)
-      }
-
       // Calculate stats from all entries
       if (allEntries) {
         
         // Calculate stats
         const validMoods = allEntries.filter(e => e.mood_score).map(e => e.mood_score!)
-        const averageMood = validMoods.length > 0 
-          ? validMoods.reduce((sum, mood) => sum + mood, 0) / validMoods.length 
+        const averageMood = validMoods.length > 0
+          ? validMoods.reduce((sum, mood) => sum + mood, 0) / validMoods.length
           : 0
 
         // This week's mood (last 7 days)
         const oneWeekAgo = new Date()
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-        const thisWeekEntries = allEntries.filter(e => 
+        const thisWeekEntries = allEntries.filter(e =>
           new Date(e.created_at) > oneWeekAgo && e.mood_score
         )
         const thisWeekMood = thisWeekEntries.length > 0
@@ -254,99 +235,29 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Mood Trends Chart */}
-        <div className="mb-8">
-          <MoodTrendsChart timeRange="30d" />
-        </div>
-
-        {/* Therapist Area */}
-        <div className="mb-8">
-          <TherapistChat />
-        </div>
-
-        {/* Today's Entries */}
+        {/* Recent Journal Entries Carousel */}
         <div className="card mb-8">
           <div className="border-b border-border pb-6 mb-6">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-semibold flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  Today's Entries
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  Recent Journal Entries
                 </h3>
-                <p className="text-muted-foreground text-sm mt-1">Your journal entries for today</p>
+                <p className="text-muted-foreground text-sm mt-1">Your last 5 journal entries</p>
               </div>
               <Link href="/journal" className="btn-ghost text-sm">
-                View all
+                View all entries
               </Link>
             </div>
           </div>
           
-          <div className="space-y-4">
-            {entries.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="mx-auto h-24 w-24 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center mb-6">
-                  <BookOpen className="h-10 w-10 text-primary" />
-                </div>
-                <h4 className="text-lg font-medium mb-2">No entries for today</h4>
-                <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                  Start your day by reflecting on your thoughts and emotions.
-                </p>
-                <Link href="/journal/new" className="btn-primary">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Write Today's Entry
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {entries.map((entry) => (
-                  <Link
-                    key={entry.id}
-                    href={`/journal/${entry.id}`}
-                    className="block group"
-                  >
-                    <div className="rounded-xl border border-border bg-background/50 p-4 transition-all duration-200 hover:border-primary/50 hover:bg-background/80 hover:shadow-md">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h4 className="font-medium text-foreground truncate">
-                              {entry.title || 'Untitled Entry'}
-                            </h4>
-                            {entry.mood_score && (
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="h-2 w-2 rounded-full"
-                                  style={{ backgroundColor: getMoodColor(getMoodLevel(entry.mood_score)) }}
-                                />
-                                <span className="text-xs font-medium text-muted-foreground">
-                                  {entry.mood_score}/10
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                            {entry.content}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>
-                              {new Date(entry.created_at).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                            <span>
-                              {entry.content.split(' ').length} words
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          {userId && <JournalEntriesCarousel userId={userId} />}
+        </div>
+
+        {/* Therapist Area */}
+        <div className="mb-8">
+          <TherapistChat />
         </div>
 
         {/* Goals Preview */}

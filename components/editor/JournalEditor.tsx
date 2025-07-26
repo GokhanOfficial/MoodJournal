@@ -9,6 +9,7 @@ import { format } from 'date-fns'
 import RichTextEditor from '@/components/editor/RichTextEditor'
 import VoiceRecorder from '@/components/voice/VoiceRecorder'
 import LocationSelector, { type LocationData } from '@/components/location/LocationSelector'
+import CoverImageSelector from '@/components/journal/CoverImageSelector'
 import { WeatherCard } from '@/components/weather/WeatherDisplay'
 import { useWeather } from '@/hooks/useWeather'
 import type { JournalEntry } from '@/types/database'
@@ -40,6 +41,10 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
   const [voiceTranscription, setVoiceTranscription] = useState('')
   const [audioUrl, setAudioUrl] = useState(entry?.audio_url || '')
   const [audioPath, setAudioPath] = useState(entry?.audio_path || '')
+  const [coverImageUrl, setCoverImageUrl] = useState(entry?.cover_image_url || '')
+  const [coverImagePath, setCoverImagePath] = useState(entry?.cover_image_path || '')
+  const [coverImagePublic, setCoverImagePublic] = useState(entry?.cover_image_public || false)
+  const [userId, setUserId] = useState<string>('')
   const [location, setLocation] = useState<LocationData | null>(() => {
     if (entry?.location_latitude && entry?.location_longitude) {
       return {
@@ -88,6 +93,17 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
       }
     }
   }, [searchParams, entry?.id])
+
+  // Get user ID on mount
+  useEffect(() => {
+    const getUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserId(user.id)
+      }
+    }
+    getUserId()
+  }, [supabase])
   // Handle voice transcription completion
   const handleVoiceTranscription = (transcription: string, audioUrlResult: string, audioPathResult: string) => {
     setVoiceTranscription(transcription)
@@ -196,6 +212,13 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
         entryData.location_timezone = location.timezone
       }
 
+      // Add cover image data if available
+      if (coverImageUrl && coverImagePath) {
+        entryData.cover_image_url = coverImageUrl
+        entryData.cover_image_path = coverImagePath
+        entryData.cover_image_public = coverImagePublic
+      }
+
       // If this is a new entry with a custom date, set created_at
       if (!entry?.id && entryDate !== format(new Date(), 'yyyy-MM-dd')) {
         const customDate = new Date(entryDate + 'T' + format(new Date(), 'HH:mm:ss'))
@@ -238,7 +261,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
       setIsSaving(false)
       pendingSaveRef.current = false
     }
-  }, [entry?.id, supabase, onSave, router, title, content, location])
+  }, [entry?.id, supabase, onSave, router, title, content, location, coverImageUrl, coverImagePath, coverImagePublic])
 
   // Manual mood analysis function
   const performMoodAnalysis = useCallback(async () => {
@@ -293,6 +316,13 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
           entryData.location_timezone = location.timezone
         }
 
+        // Add cover image data if available
+        if (coverImageUrl && coverImagePath) {
+          entryData.cover_image_url = coverImageUrl
+          entryData.cover_image_path = coverImagePath
+          entryData.cover_image_public = coverImagePublic
+        }
+
         // If this is a new entry with a custom date, set created_at
         if (!entry?.id && entryDate !== format(new Date(), 'yyyy-MM-dd')) {
           const customDate = new Date(entryDate + 'T' + format(new Date(), 'HH:mm:ss'))
@@ -331,7 +361,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     } finally {
       setIsAnalyzing(false)
     }
-  }, [content, title, entry?.id, supabase, onSave, router, location])
+  }, [content, title, entry?.id, supabase, onSave, router, location, coverImageUrl, coverImagePath, coverImagePublic])
 
   // Handle content changes (NO auto-analysis)
   const handleContentChange = (newContent: string) => {
@@ -431,6 +461,13 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
             entryData.location_timezone = location.timezone
           }
 
+          // Add cover image data if available
+          if (coverImageUrl && coverImagePath) {
+            entryData.cover_image_url = coverImageUrl
+            entryData.cover_image_path = coverImagePath
+            entryData.cover_image_public = coverImagePublic
+          }
+
           // If this is a new entry with a custom date, set created_at
           if (!entry?.id && entryDate !== format(new Date(), 'yyyy-MM-dd')) {
             const customDate = new Date(entryDate + 'T' + format(new Date(), 'HH:mm:ss'))
@@ -456,7 +493,7 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
     }
     
     router.push('/dashboard')
-  }, [hasUnsavedChanges, content, currentAnalysis, title, entry?.id, supabase, router, performAutoSave, location])
+  }, [hasUnsavedChanges, content, currentAnalysis, title, entry?.id, supabase, router, performAutoSave, location, coverImageUrl, coverImagePath, coverImagePublic])
 
 
 
@@ -640,6 +677,20 @@ export default function JournalEditor({ entry, onSave }: JournalEditorProps) {
                   </p>
                 )}
               </div>
+
+              {/* Cover Image Selector */}
+              {userId && (
+                <CoverImageSelector
+                  currentImageUrl={coverImageUrl}
+                  onImageSelect={(url, path, isPublic) => {
+                    setCoverImageUrl(url)
+                    setCoverImagePath(path)
+                    setCoverImagePublic(isPublic)
+                    setHasUnsavedChanges(true)
+                  }}
+                  userId={userId}
+                />
+              )}
 
               {/* Editor */}
               <div className="relative space-y-2">

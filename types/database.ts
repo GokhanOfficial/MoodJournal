@@ -63,6 +63,9 @@ export interface Database {
           location_city: string | null
           location_country: string | null
           location_timezone: string | null
+          cover_image_url: string | null
+          cover_image_path: string | null
+          cover_image_public: boolean
           created_at: string
           updated_at: string
         }
@@ -87,6 +90,9 @@ export interface Database {
           location_city?: string | null
           location_country?: string | null
           location_timezone?: string | null
+          cover_image_url?: string | null
+          cover_image_path?: string | null
+          cover_image_public?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -111,6 +117,9 @@ export interface Database {
           location_city?: string | null
           location_country?: string | null
           location_timezone?: string | null
+          cover_image_url?: string | null
+          cover_image_path?: string | null
+          cover_image_public?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -446,6 +455,73 @@ export interface Database {
           updated_at?: string
         }
       }
+      public_cover_images: {
+        Row: {
+          id: string
+          title: string
+          image_url: string
+          image_path: string
+          category: string | null
+          uploaded_by: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          image_url: string
+          image_path: string
+          category?: string | null
+          uploaded_by?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          image_url?: string
+          image_path?: string
+          category?: string | null
+          uploaded_by?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_cover_images: {
+        Row: {
+          id: string
+          user_id: string
+          title: string | null
+          image_url: string
+          image_path: string
+          is_public: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title?: string | null
+          image_url: string
+          image_path: string
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string | null
+          image_url?: string
+          image_path?: string
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       goal_progress_view: {
@@ -490,4 +566,6 @@ export type WeatherData = Tables<'weather_data'>
 export type MoodSummary = Tables<'mood_summaries'>
 export type Achievement = Tables<'achievements'>
 export type UserAchievement = Tables<'user_achievements'>
+export type PublicCoverImage = Tables<'public_cover_images'>
+export type UserCoverImage = Tables<'user_cover_images'>
 export type GoalProgressView = Database['public']['Views']['goal_progress_view']['Row']
